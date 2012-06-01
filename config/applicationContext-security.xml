@@ -7,7 +7,7 @@
 
 	<security:http> <!-- note: no auto-config attribute! access="ROLE_MODELER,ROLE_DESIGNER" -->
 		<security:intercept-url pattern="/rest/*"
-			access="ROLE_MODELER,ROLE_DESIGNER,ROLE_ADMIN" />
+			access="ROLE_ACCOUNT_MANAGER" />
 		<security:http-basic />
 	</security:http>
 

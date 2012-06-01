@@ -51,8 +51,7 @@
             <list>
                 <value>org.openremote.useraccount.domain.Account</value>
                 <value>org.openremote.useraccount.domain.User</value>
-                <value>org.openremote.useraccount.domain.DiscoveredDevice</value>
-                <value>org.openremote.useraccount.domain.DiscoveredDeviceAttr</value>
+                <value>org.openremote.useraccount.domain.Role</value>
             </list>
         </property>
     </bean>
@@ -64,10 +63,15 @@
     </bean>
     
     <bean id="application" class="org.openremote.useraccount.UserAccountServiceApplication">
+    	<property name="dao" ref="genericDAO" />
         <property name="root" ref="router"/>
     </bean>
     
     <bean name="router" class="org.restlet.ext.spring.SpringBeanRouter" />
+    
+    <bean name="/rest/accounts" class="org.openremote.useraccount.resources.AccountListCommandsResource" scope="prototype">
+    	<property name="dao" ref="genericDAO" />
+    </bean>
     
     <bean name="/rest/account" class="org.openremote.useraccount.resources.AccountCommandsResource" scope="prototype">
     	<property name="dao" ref="genericDAO" />
@@ -77,6 +81,10 @@
     	<property name="dao" ref="genericDAO" />
     </bean>
 
+    <bean name="/rest/users" class="org.openremote.useraccount.resources.UserListCommandsResource" scope="prototype">
+    	<property name="dao" ref="genericDAO" />
+    </bean>
+    
     <bean name="/rest/user" class="org.openremote.useraccount.resources.UserCommandsResource" scope="prototype">
     	<property name="dao" ref="genericDAO" />
     </bean>
@@ -85,6 +93,10 @@
     	<property name="dao" ref="genericDAO" />
     </bean>
 
+    <bean name="/rest/controllers" class="org.openremote.useraccount.resources.ControllerListCommandsResource" scope="prototype">
+    	<property name="dao" ref="genericDAO" />
+    </bean>
+    
     <bean name="/rest/controller" class="org.openremote.useraccount.resources.ControllerCommandsResource" scope="prototype">
     	<property name="dao" ref="genericDAO" />
     </bean>
@@ -92,7 +104,11 @@
     <bean name="/rest/controller/{controllerUuid}" class="org.openremote.useraccount.resources.ControllerCommandsResource" scope="prototype">
     	<property name="dao" ref="genericDAO" />
     </bean>
-    
+
+    <bean name="/rest/certificates" class="org.openremote.useraccount.resources.CertificateListCommandsResource" scope="prototype">
+    	<property name="dao" ref="genericDAO" />
+    </bean>
+        
     <bean name="/rest/certificate" class="org.openremote.useraccount.resources.CertificateCommandsResource" scope="prototype">
     	<property name="dao" ref="genericDAO" />
     </bean>
