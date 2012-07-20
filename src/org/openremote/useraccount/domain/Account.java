@@ -20,6 +20,7 @@
 package org.openremote.useraccount.domain;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -39,7 +40,7 @@ public class Account extends BusinessEntity
   private static final long serialVersionUID = -5029444774173816237L;
 
   /** The users. */
-  private List<User> users;
+  private Set<User> users;
 
   /** The controllers this account is linked to */
   private List<Controller> controllers;
@@ -52,12 +53,12 @@ public class Account extends BusinessEntity
   }
 
   @OneToMany(mappedBy = "account")
-  public List<User> getUsers()
+  public Set<User> getUsers()
   {
     return users;
   }
 
-  public void setUsers(List<User> users)
+  public void setUsers(Set<User> users)
   {
     this.users = users;
   }

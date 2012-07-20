@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.hibernate.Hibernate;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Restrictions;
@@ -84,6 +85,9 @@ public class ControllerCommandsResource extends ServerResource
             controller.setLinked(false);
             dao.save(controller);
           }
+          if (controller.getAccount() != null) {
+            Hibernate.initialize(controller.getAccount().getUsers());
+          }          
           return new GenericResourceResultWithErrorMessage(null, controller);
         } catch (Exception e) {
           transactionStatus.setRollbackOnly();
@@ -91,7 +95,7 @@ public class ControllerCommandsResource extends ServerResource
         }
       }
     });
-    rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.account.controllers").deepSerialize(result));
+    rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.controllers", "result.account.users.roles").deepSerialize(result));
     return rep;
   }
 
@@ -121,6 +125,9 @@ public class ControllerCommandsResource extends ServerResource
                 dao.merge(changedController.getAccount());
               }
               Controller savedController = (Controller)dao.merge(changedController);
+              if (savedController.getAccount() != null) {
+                Hibernate.initialize(savedController.getAccount().getUsers());
+              }
               return new GenericResourceResultWithErrorMessage(null, savedController);
             } catch (Exception e) {
               transactionStatus.setRollbackOnly();
@@ -128,7 +135,7 @@ public class ControllerCommandsResource extends ServerResource
             }
           }
         });
-        rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.account.controllers").deepSerialize(result));
+        rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.controllers", "result.account.users.roles").deepSerialize(result));
       }
     }
     return rep;
