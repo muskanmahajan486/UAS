@@ -21,6 +21,7 @@
 package org.openremote.useraccount.domain;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -31,8 +32,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import flexjson.JSON;
+import javax.persistence.Transient;
 
 /**
  * TODO
@@ -45,7 +45,12 @@ public class User extends BusinessEntity
 {
 
   private static final long serialVersionUID = 6064996041309363949L;
-
+  
+  public static final String ROLE_MODELER_DISPLAYNAME = "Building Modeler";
+  public static final String ROLE_DESIGNER_DISPLAYNAME = "UI Designer";
+  public static final String ROLE_MODELER_DESIGNER_DISPLAYNAME = "Building Modeler & UI Designer";
+  public static final String ROLE_ADMIN_DISPLAYNAME = "Admin";
+  
   private String username;
 
   private String password;
@@ -70,11 +75,13 @@ public class User extends BusinessEntity
   public User()
   {
     account = new Account();
+    roles = new ArrayList<Role>();
   }
 
   public User(Account account)
   {
     this.account = account;
+    roles = new ArrayList<Role>();
   }
 
   /**
@@ -170,6 +177,25 @@ public class User extends BusinessEntity
    */
   public void addRole(Role role) {
      roles.add(role);
+  }
+  
+  @Transient
+  public String getRole() {
+     List<String> roleStrs = new ArrayList<String>();
+     for (Role role : roles) {
+        roleStrs.add(role.getName());
+     }
+     String userRole = null;
+     if (roleStrs.contains(Role.ROLE_ADMIN)) {
+        userRole = ROLE_ADMIN_DISPLAYNAME;
+     } else if(roleStrs.contains(Role.ROLE_MODELER) && roleStrs.contains(Role.ROLE_DESIGNER)) {
+        userRole = ROLE_MODELER_DESIGNER_DISPLAYNAME;
+     } else if (roleStrs.contains(Role.ROLE_MODELER)) {
+        userRole = ROLE_MODELER_DISPLAYNAME;
+     } else if(roleStrs.contains(Role.ROLE_DESIGNER)) {
+        userRole = ROLE_DESIGNER_DISPLAYNAME;
+     }
+     return userRole;
   }
   
   public String getEmail()

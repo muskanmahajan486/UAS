@@ -5,15 +5,11 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/core/restlet-jee-2.0.11/org.restlet.ext.servlet.jar"/>
-	<classpathentry kind="lib" path="lib/core/restlet-jee-2.0.11/org.restlet.jar"/>
+	<classpathentry kind="lib" path="lib/core/restlet-jee-2.0.11/org.restlet.jar" sourcepath="/Users/marcus/Downloads/restlet-jse-2.0.11/src/org.restlet"/>
 	<classpathentry kind="lib" path="lib/core/restlet-jee-2.0.11/org.restlet.ext.fileupload.jar"/>
-	<classpathentry kind="lib" path="lib/core/irfileslib/ircodeslib-1.0-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="lib/core/irfileslib/irfileslib-1.0-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="lib/core/irfileslib/tinsysfwk-1.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/core/restlet-jee-2.0.11/org.restlet.ext.spring.jar"/>
 	<classpathentry kind="lib" path="lib/core/restlet-jee-2.0.11/org.restlet.ext.json.jar"/>
 	<classpathentry kind="lib" path="lib/core/org.json_2.0/org.json.jar"/>
-	<classpathentry kind="lib" path="lib/core/openremote/or-commons.jar"/>
 	<classpathentry kind="con" path="com.genuitec.eclipse.j2eedt.core.J2EE14_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/core/hibernate/antlr-2.7.6.jar"/>
 	<classpathentry kind="lib" path="lib/core/hibernate/ejb3-persistence.jar"/>
@@ -50,5 +46,10 @@
 	<classpathentry kind="lib" path="lib/core/asm/asm.jar"/>
 	<classpathentry kind="lib" path="lib/test/junit/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="lib/core/flexjson-2.1/flexjson-2.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ORCommons"/>
+	<classpathentry kind="lib" path="lib/core/mail/activation-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/core/mail/mail-1.4.3.jar"/>
+	<classpathentry kind="lib" path="lib/core/spring/org.springframework.context.support-3.1.1.RELEASE.jar"/>
+	<classpathentry kind="lib" path="lib/core/velocity/velocity-1.6.2-dep.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

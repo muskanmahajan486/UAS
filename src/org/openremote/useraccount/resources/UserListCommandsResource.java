@@ -33,6 +33,7 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
+import org.springframework.transaction.annotation.Transactional;
 
 import flexjson.JSONSerializer;
 
@@ -90,13 +91,8 @@ public class UserListCommandsResource extends ServerResource
     {
       result = new GenericResourceResultWithErrorMessage(e.getMessage(), null);
     }
-    Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.roles.users").deepSerialize(result));
+    Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.roles.users", "result.account.controllers").deepSerialize(result));
     return rep;
-  }
-
-  public GenericDAO getDao()
-  {
-    return dao;
   }
 
   public void setDao(GenericDAO dao)

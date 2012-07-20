@@ -20,10 +20,14 @@
 
 package org.openremote.useraccount.resources;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.hibernate.Hibernate;
+import javax.mail.internet.MimeMessage;
+
+import org.apache.velocity.app.VelocityEngine;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
 import org.openremote.useraccount.GenericDAO;
 import org.openremote.useraccount.domain.Account;
@@ -37,6 +41,14 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.mail.javamail.MimeMessagePreparator;
+import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.ui.velocity.VelocityEngineUtils;
 
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
@@ -48,8 +60,13 @@ import flexjson.JSONSerializer;
  */
 public class UserCommandsResource extends ServerResource
 {
-
+  public static final String REGISTRATION_ACTIVATION_EMAIL_VM_NAME= "registration-activation-email.vm";
+  
   private GenericDAO dao;
+  private TransactionTemplate transactionTemplate;
+  private JavaMailSenderImpl mailSender;
+  private VelocityEngine velocityEngine;
+  private String designerWebappServerRoot;
 
   /**
    * Return one user based on his oid<p>
@@ -72,7 +89,7 @@ public class UserCommandsResource extends ServerResource
     {
       result = new GenericResourceResultWithErrorMessage(e.getMessage(), null);
     }
-    Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.roles.users").deepSerialize(result));
+    Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.roles.users", "result.account.controllers").deepSerialize(result));
     return rep;
   }
 
@@ -84,25 +101,44 @@ public class UserCommandsResource extends ServerResource
    * @return OID of the saved user
    */
   @Post("json:json")
-  public Representation createUser(Representation data)
+  public Representation createUser(final Representation data)
   {
     Representation rep = null;
     GenericResourceResultWithErrorMessage result = null;
     if (data != null) {
       if (MediaType.APPLICATION_JSON.equals(data.getMediaType(), true)) {
-        try {
-          String jsonData = data.getText();
-          User newUser = new JSONDeserializer<User>().use(null, User.class).deserialize(jsonData);
-          String roleName = newUser.getRoles().get(0).getName();
-          newUser.setAccount(new Account());
-          newUser.setRoles(new ArrayList<Role>());
-          newUser.addRole(dao.getByNonIdField(Role.class, "name", roleName));
-          dao.save(newUser.getAccount());
-          dao.save(newUser);
-          result = new GenericResourceResultWithErrorMessage(null, newUser.getOid());
-        } catch (Exception e) {
-          result = new GenericResourceResultWithErrorMessage(e.getMessage(), null);
-        }
+        result = transactionTemplate.execute(new TransactionCallback<GenericResourceResultWithErrorMessage>() {
+          @Override
+          public GenericResourceResultWithErrorMessage doInTransaction(TransactionStatus transactionStatus)
+          {
+            try {
+              String jsonData = data.getText();
+              User newUser = new JSONDeserializer<User>().use(null, User.class).deserialize(jsonData);
+              if( (newUser.getAccount() == null) || (newUser.getAccount().getOid() == 0)) {
+                newUser.setAccount(new Account());
+                dao.save(newUser.getAccount());
+              } else {
+                dao.merge(newUser.getAccount());
+              }
+              List<Role> dbRoles = new ArrayList<Role>();
+              for (Role role : newUser.getRoles())
+              {
+                if (role.getOid() == 0) {
+                  role = dao.getByNonIdField(Role.class, "name", role.getName()); 
+                }
+                dbRoles.add(role);
+              }
+              newUser.setRoles(dbRoles);
+              dao.save(newUser);
+              sendRegistrationEmail(newUser, designerWebappServerRoot);
+              return new GenericResourceResultWithErrorMessage(null, newUser.getOid());
+            } catch (Exception e) {
+              transactionStatus.setRollbackOnly();
+              return new GenericResourceResultWithErrorMessage(e.getMessage(), null);
+            }
+          }
+        });
+
         rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(result));
       }
     }
@@ -111,32 +147,39 @@ public class UserCommandsResource extends ServerResource
 
 
   /**
-   * Update the user with the given id
+   * Update the given user
    * PUT data has to contain user as JSON string
    * REST PUT Url:/rest/user
    * @param data
-   * @return the OID of the updated user
+   * @return the updated user
    */
   @Put("json:json")
-  public Representation updateUser(Representation data)
+  public Representation updateUser(final Representation data)
   {
     Representation rep = null;
     GenericResourceResultWithErrorMessage result = null;
     if (data != null) {
       if (MediaType.APPLICATION_JSON.equals(data.getMediaType(), true)) {
-        try {
-          String jsonData = data.getText();
-          User changedUser = new JSONDeserializer<User>().use(null, User.class).deserialize(jsonData);
-          for (Role role : changedUser.getRoles())
+        result = transactionTemplate.execute(new TransactionCallback<GenericResourceResultWithErrorMessage>() {
+          @Override
+          public GenericResourceResultWithErrorMessage doInTransaction(TransactionStatus transactionStatus)
           {
-            dao.merge(role);
+            try {
+              String jsonData = data.getText();
+              User changedUser = new JSONDeserializer<User>().use(null, User.class).deserialize(jsonData);
+              for (Role role : changedUser.getRoles())
+              {
+                dao.merge(role);
+              }
+              User savedUser = (User)dao.merge(changedUser);
+              return new GenericResourceResultWithErrorMessage(null, savedUser);
+            } catch (Exception e) {
+              transactionStatus.setRollbackOnly();
+              return new GenericResourceResultWithErrorMessage(e.getMessage(), null);
+            }
           }
-          User savedUser = (User)dao.merge(changedUser);
-          result = new GenericResourceResultWithErrorMessage(null, savedUser.getOid());
-        } catch (Exception e) {
-          result = new GenericResourceResultWithErrorMessage(e.getMessage(), null);
-        }
-        rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(result));
+        });
+        rep = new JsonRepresentation(new JSONSerializer().exclude("*.class", "result.account.users", "result.roles.users", "result.account.controllers").deepSerialize(result));
       }
     }
     return rep;
@@ -172,15 +215,54 @@ public class UserCommandsResource extends ServerResource
     rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(result));
     return rep;
   }
-
-  public GenericDAO getDao()
-  {
-    return dao;
-  }
-
+  
+  
+  
+  private void sendRegistrationEmail(final User user, final String designerWebappServerRoot) throws Exception {
+    
+    MimeMessagePreparator preparator = new MimeMessagePreparator() {
+       public void prepare(MimeMessage mimeMessage) throws Exception {
+         MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+         message.setSubject("OpenRemote Designer Account Registration");
+         message.setTo(user.getEmail());
+         message.setFrom(mailSender.getUsername());
+         Map<String, Object> model = new HashMap<String, Object>();
+         model.put("user", user);
+         model.put("webapp", designerWebappServerRoot);
+         // TODO : this needs to be fixed (MR: comment was taken from original line in designer)
+         model.put("aid", new Md5PasswordEncoder().encodePassword(user.getUsername(), user.getPassword()));
+         String text = VelocityEngineUtils.mergeTemplateIntoString(velocityEngine, REGISTRATION_ACTIVATION_EMAIL_VM_NAME, "UTF-8", model );
+         message.setText(text, true);
+       }
+    };
+    this.mailSender.send(preparator);
+ }
+  
+  
   public void setDao(GenericDAO dao)
   {
     this.dao = dao;
   }
 
+  public void setTransactionTemplate(TransactionTemplate transactionTemplate)
+  {
+    this.transactionTemplate = transactionTemplate;
+  }
+
+  public void setMailSender(JavaMailSenderImpl mailSender)
+  {
+    this.mailSender = mailSender;
+  }
+
+  public void setVelocityEngine(VelocityEngine velocityEngine)
+  {
+    this.velocityEngine = velocityEngine;
+  }
+
+  public void setDesignerWebappServerRoot(String designerWebappServerRoot)
+  {
+    this.designerWebappServerRoot = designerWebappServerRoot;
+  }
+
+  
 }

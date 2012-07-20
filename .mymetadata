@@ -3,10 +3,11 @@
   type="WEB"
   name="UserAccountService"
   id="myeclipse.1337956186592"
+  context-root="/uas"
   j2ee-spec="1.4"
   archive="UserAccountService.war">
   <attributes>
-    <attribute name="webrootdir" value="WebRoot" />
+    <attribute name="webrootdir" value="/war" />
   </attributes>
 </project-module>
 

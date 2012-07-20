@@ -41,6 +41,9 @@ public class Account extends BusinessEntity
   /** The users. */
   private List<User> users;
 
+  /** The controllers this account is linked to */
+  private List<Controller> controllers;
+  
   /**
    * Instantiates a new account.
    */
@@ -59,6 +62,16 @@ public class Account extends BusinessEntity
     this.users = users;
   }
 
+  @OneToMany(mappedBy = "account")  
+  public List<Controller> getControllers()
+  {
+    return controllers;
+  }
+
+  public void setControllers(List<Controller> controllers)
+  {
+    this.controllers = controllers;
+  }
 
   @Override
   public int hashCode()

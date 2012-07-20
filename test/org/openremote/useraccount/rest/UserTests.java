@@ -1,13 +1,15 @@
 package org.openremote.useraccount.rest;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
-import org.openremote.useraccount.domain.Role;
+import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.RoleDTO;
 import org.openremote.useraccount.domain.UserDTO;
 import org.restlet.data.ChallengeScheme;
@@ -16,14 +18,15 @@ import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 
-
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
-public class Client
+public class UserTests
 {
 
   private static Long addedUserOID;
+  private static Long addedUserOID2;
+  private static Long addedUserOID3;
   private static UserDTO addedUser;
   
   /**
@@ -57,6 +60,7 @@ public class Client
     user.setEmail("rest_test@openremote.de");
     user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
+    user.setAccount(new AccountDTO());
 
     ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
@@ -126,11 +130,12 @@ public class Client
     Representation r = cr.put(rep);
 
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
       Assert.fail(res.getErrorMessage());
     } else {
-      Assert.assertEquals(addedUserOID.longValue(), ((Long)res.getResult()).longValue());
+      UserDTO savedUser = (UserDTO)res.getResult();
+      Assert.assertEquals(addedUserOID.longValue(), savedUser.getOid().longValue());
     }
   }
   
@@ -152,7 +157,60 @@ public class Client
   }
   
   /**
-   * Test: delete devices
+   * Test: Add second user to existing account
+   */
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testAddUserToAccount() throws Exception
+  {
+    String username = "REST_TEST2";
+    UserDTO user = new UserDTO();
+    user.setUsername(username);
+    user.setPassword(new Md5PasswordEncoder().encodePassword("password", username));
+    user.setEmail("rest_test@openremote.de");
+    user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
+    user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
+    user.setAccount(new AccountDTO(addedUser.getAccount().getOid()));
+
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
+    Representation r = cr.post(rep);
+    String str = r.getText();
+    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    if (res.getErrorMessage() != null) {
+      Assert.fail(res.getErrorMessage());
+    } else {
+      addedUserOID2 = (Long)res.getResult();
+      Assert.assertNotNull(res.getResult());
+      Assert.assertTrue(res.getResult() instanceof Long);
+    }
+  }
+  
+  /**
+   * Test invite user REST call
+   */
+  @Test
+  public void testInviteUser() {
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID + "/inviteUser?inviteeEmail=mredeker@web.de&inviteeRoles=ROLE_ADMIN");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation r = cr.post(null);
+    String str;
+    try { 
+      str = r.getText();
+    } catch (IOException e)
+    {
+      throw new RuntimeException(e);
+    }
+    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str);
+    UserDTO inviteeDTO = (UserDTO)res.getResult();
+    addedUserOID3 = inviteeDTO.getOid();
+    Assert.assertEquals("mredeker@web.de", inviteeDTO.getEmail());
+    Assert.assertEquals(null, res.getErrorMessage()); 
+  }
+  
+  /**
+   * Test: delete user
    */
   @Test
   public void testDeleteUser() throws Exception
@@ -162,6 +220,20 @@ public class Client
       Representation result = cr.delete();
       String str = result.getText();
       GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertEquals(null, res.getErrorMessage());
+      
+      cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID2);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      result = cr.delete();
+      str = result.getText();
+      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertEquals(null, res.getErrorMessage());
+      
+      cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID3);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      result = cr.delete();
+      str = result.getText();
+      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
       Assert.assertEquals(null, res.getErrorMessage());
   }
   

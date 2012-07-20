@@ -56,14 +56,13 @@ public class UserAccountServiceApplication extends Application {
     
  }
   
-  public GenericDAO getDao()
-  {
-    return dao;
-  }
 
   public void setDao(GenericDAO dao)
   {
     this.dao = dao;
   }
   
+  
+  
 }
+
