@@ -25,8 +25,7 @@ public class ControllerTests
   @Test
   public void testCreateAnnounceControllerWithNoMACAddresses() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/controller");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/controller/announce");
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -44,7 +43,6 @@ public class ControllerTests
   public void testCreateAnnounceController() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/controller/announce/"+ getMACAddresses1());
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -65,7 +63,6 @@ public class ControllerTests
   public void testCreateAnnounceController2() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/controller/announce/"+ getMACAddresses2());
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -114,7 +111,6 @@ public class ControllerTests
   public void testCreateAnnounceControllerAfterLink() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/controller/announce/"+ getMACAddresses2());
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
