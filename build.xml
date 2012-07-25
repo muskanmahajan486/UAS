@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
 OpenRemote, the Home of the Digital Home.
-Copyright 2008-2011, OpenRemote Inc.
+Copyright 2008-2012, OpenRemote Inc.
 
 See the contributors.txt file in the distribution for a
 full listing of individual contributors.
@@ -21,9 +21,9 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 <!--
- |  Build file for OpenRemote IRService
+ |  Build file for OpenRemote UserAccountService
  |
- |  Author: Eric Bariaux
+ |  Author: Marcus Redeker
  +-->
 <project name="UserAccountService" default="javac" basedir=".">
 
@@ -31,7 +31,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	<property file="build.properties"/>
 
 	<!-- Some base dir used -->
-	<property name="project.name" value="irservice" />
+	<property name="project.name" value="uas" />
 	<property name="lib.dir" value="lib" />
 	<property name="web-inf.dir" value="war/WEB-INF" />
 	<property name="src.dir" value="src"/>
@@ -94,7 +94,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 		<echo message="--------------------------------------------------------------------" />
 		<echo message="" />
 		<mkdir dir="${web-inf.dir}/classes" />
-		<javac srcdir="${src.dir}" excludes="org/openremote/modeler/client/**" includes="**" encoding="utf-8" destdir="${web-inf.dir}/classes" source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
+		<javac srcdir="${src.dir}" includes="**" encoding="utf-8" destdir="${web-inf.dir}/classes" source="1.5" target="1.5" nowarn="true" debug="true" debuglevel="lines,vars,source">
 			<classpath refid="project.class.path"/>
 		</javac>
 		<copy todir="${web-inf.dir}/classes">
@@ -157,8 +157,8 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	              locale           ="${javadoc.locale}"
 	              defaultexcludes  = "yes"
 	              use              = "yes"
-	              header           = "OpenRemote Modeler API "
-	              doctitle         = "OpenRemote Modeler API Specification V2.0"
+	              header           = "OpenRemote UserAccount REST service API"
+	              doctitle         = "OpenRemote UserAccount REST service API"
 	              nodeprecatedlist = "yes"
 			      classpathref     = "project.class.path" 
 	              sourcepath       = "./${src.dir}"
