@@ -7,6 +7,9 @@
 
 	<security:http security="none" pattern="/rest/controller/announce/*"/>
 	<security:http>
+		<security:intercept-url pattern="/rest/controller/find" access="ROLE_ADMIN" />
+		<security:intercept-url pattern="/rest/controller" access="ROLE_ADMIN" />
+		<security:intercept-url pattern="/rest/controller/*" access="ROLE_ADMIN" />
 		<security:intercept-url pattern="/rest/*" access="ROLE_ACCOUNT_MANAGER" />
 		<security:http-basic />
 	</security:http>
