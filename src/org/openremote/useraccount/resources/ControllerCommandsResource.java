@@ -12,7 +12,6 @@ import org.openremote.rest.GenericResourceResultWithErrorMessage;
 import org.openremote.useraccount.GenericDAO;
 import org.openremote.useraccount.domain.Account;
 import org.openremote.useraccount.domain.Controller;
-import org.openremote.useraccount.domain.Role;
 import org.openremote.useraccount.domain.User;
 import org.restlet.data.MediaType;
 import org.restlet.ext.json.JsonRepresentation;
@@ -22,6 +21,7 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -174,7 +174,8 @@ public class ControllerCommandsResource extends ServerResource
   
   
   /**
-   * Is called by the designer to find a controller via its macAddress<br>
+   * Is called by the designer to find a controller via its macAddress independet of it's account<br>
+   * or to find all controllers of the account belonging to the user who is doing the call
    * 
    * REST POST Url: /rest/controller/find/{macAddresses} -> return controllerDTO<br>
    * 
@@ -186,29 +187,25 @@ public class ControllerCommandsResource extends ServerResource
   {
     Representation rep = null;
     GenericResourceResultWithErrorMessage result = null;
-    final String macAddresses = (String) getRequest().getAttributes().get("macAddresses");
+    final String macAddress = (String) getRequest().getAttributes().get("macAddresses");
+    String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    User user = dao.getByNonIdField(User.class, "username", username);
+    final Account account = user.getAccount();
       
     result = transactionTemplate.execute(new TransactionCallback<GenericResourceResultWithErrorMessage>() {
       @Override
       public GenericResourceResultWithErrorMessage doInTransaction(TransactionStatus transactionStatus)
       {
+        List<Controller> result = new ArrayList<Controller>();
         try {
-          if (macAddresses == null) {
-            return new GenericResourceResultWithErrorMessage("No macAddresses were provided", null);
-          }
-          StringTokenizer st = new StringTokenizer(macAddresses, ",");
-          Controller controller = null;
-          while (st.hasMoreElements())
-          {
-            String macAddress = (String) st.nextElement();
-            DetachedCriteria search = DetachedCriteria.forClass(Controller.class);
+          DetachedCriteria search = DetachedCriteria.forClass(Controller.class);
+          if (macAddress != null) {
             search.add(Restrictions.ilike("macAddress", macAddress, MatchMode.ANYWHERE));
-            controller = dao.findOneByDetachedCriteria(search);
-            if (controller != null) {
-              break; //If we found a controller for one address this is the same controller even if we have multiple addresses
-            }
+          } else {
+            search.add(Restrictions.eq("account", account));            
           }
-          return new GenericResourceResultWithErrorMessage(null, controller);
+          result = dao.findByDetachedCriteria(search);
+          return new GenericResourceResultWithErrorMessage(null, result);
         } catch (Exception e) {
           transactionStatus.setRollbackOnly();
           return new GenericResourceResultWithErrorMessage(e.getMessage(), null);
