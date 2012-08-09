@@ -200,8 +200,11 @@ public class ControllerCommandsResource extends ServerResource
         try {
           DetachedCriteria search = DetachedCriteria.forClass(Controller.class);
           if (macAddress != null) {
+            //Find the controller with the given MacAddress which is not linked to an account yet
             search.add(Restrictions.ilike("macAddress", macAddress, MatchMode.ANYWHERE));
+            search.add(Restrictions.eq("linked", Boolean.FALSE));
           } else {
+            //Find all linked controllers of this account
             search.add(Restrictions.eq("account", account));            
           }
           result = dao.findByDetachedCriteria(search);
