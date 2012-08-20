@@ -150,7 +150,6 @@ public class InviteUserCommandResource extends ServerResource
         MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
         message.setSubject("Invitation to Share an OpenRemote Designer Account");
         message.setTo(invitee.getEmail());
-        message.setFrom(mailSender.getUsername());
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("uid", invitee.getOid());
         model.put("role", invitee.getRole());

@@ -89,7 +89,8 @@
   		<property name="password" value="${mail.sender.password}" />
 		<property name="javaMailProperties">
 			<props>
-	  			<prop key="mail.smtp.timeout">{mail.smtp.timeout}</prop> 
+	  			<prop key="mail.smtp.timeout">${mail.smtp.timeout}</prop>
+	  			 <prop key="mail.from">${mail.sender.from}</prop>
 	  		</props>
   		</property>
   	</bean>
