@@ -159,6 +159,10 @@
     	<property name="transactionTemplate" ref="transactionTemplate" />
     </bean>
 
+    <bean name="/rest/user/checkAvailabilty/{userName}" class="org.openremote.useraccount.resources.CheckUsernameAvailabilityCommandResource" scope="prototype">
+    	<property name="dao" ref="genericDAO" />
+    </bean>
+
     <bean name="/rest/controller" class="org.openremote.useraccount.resources.ControllerCommandsResource" scope="prototype">
     	<property name="dao" ref="genericDAO" />
     	<property name="transactionTemplate" ref="transactionTemplate" />

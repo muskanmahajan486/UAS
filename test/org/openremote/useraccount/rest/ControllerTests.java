@@ -210,29 +210,6 @@ public class ControllerTests
   }
   
   /**
-   * Test: Find controller via macAddress
-   */
-  @SuppressWarnings("unchecked")
-  @Test
-  public void testFindControllerViaMacAddress() throws Exception
-  {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/controller/find/"+ getMACAddresses1());
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
-    Representation r = cr.get();
-    String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", ControllerDTO.class).deserialize(str); 
-    if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
-    } else {
-      List<ControllerDTO> tempList = (List<ControllerDTO>)res.getResult();
-      Assert.assertEquals(1, tempList.size());
-      Assert.assertEquals(getMACAddresses2(), tempList.get(0).getMacAddress());
-      Assert.assertEquals(addedController.getOid(), tempList.get(0).getOid());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid());
-    }
-  }
-  
-  /**
    * Test: Find all linked controller for the account
    */
   @SuppressWarnings("unchecked")

@@ -6,6 +6,7 @@
              http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
 
 	<security:http security="none" pattern="/rest/controller/announce/*"/>
+	<security:http security="none" pattern="/rest/user/checkAvailabilty/*"/>
 	<security:http>
 		<security:intercept-url pattern="/rest/controller/find" access="ROLE_ADMIN" />
 		<security:intercept-url pattern="/rest/controller" access="ROLE_ADMIN" />

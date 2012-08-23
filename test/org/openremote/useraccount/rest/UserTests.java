@@ -102,7 +102,7 @@ public class UserTests
   public void testQueryUserByOid() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID);
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+   // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
@@ -156,6 +156,22 @@ public class UserTests
     Assert.assertEquals(1, dtos.size());
   }
   
+
+  /**
+   * Test: Check username availability
+   */
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testCheckUsernameAvailability() throws Exception
+  {
+    String username = "REST_TEST2";
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+   // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation r = cr.get();
+    String str = r.getText();
+    Assert.assertEquals("{\"result\": \"true\"}", str);
+  }
+  
   /**
    * Test: Add second user to existing account
    */
@@ -185,6 +201,36 @@ public class UserTests
       Assert.assertNotNull(res.getResult());
       Assert.assertTrue(res.getResult() instanceof Long);
     }
+  }
+  
+  /**
+   * Test: Check username availability2
+   */
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testCheckUsernameAvailability2() throws Exception
+  {
+    String username = "REST_TEST2";
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation r = cr.get();
+    String str = r.getText();
+    Assert.assertEquals("{\"result\": \"false\"}", str);
+  }
+  
+  /**
+   * Test: Check username availability ignore case
+   */
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testCheckUsernameAvailabilityIgnoreCase() throws Exception
+  {
+    String username = "rest_TEST2";
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation r = cr.get();
+    String str = r.getText();
+    Assert.assertEquals("{\"result\": \"false\"}", str);
   }
   
   /**
@@ -237,5 +283,19 @@ public class UserTests
       Assert.assertEquals(null, res.getErrorMessage());
   }
   
-
+  /**
+   * Test: Check username availability after delete
+   */
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testCheckUsernameAvailabilityAgain() throws Exception
+  {
+    String username = "rest_TEST2";
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    //cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation r = cr.get();
+    String str = r.getText();
+    Assert.assertEquals("{\"result\": \"true\"}", str);
+  }
+  
 }
