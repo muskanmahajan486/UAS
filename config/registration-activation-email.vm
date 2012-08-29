@@ -16,12 +16,12 @@ You do not need to unsubscribe or take any further action.
 <h3>Activation Instructions</h3>
 
 <p>
-We require that you validate your registration to ensure that the email address
-you entered was correct. This protects against unwanted spam and malicious abuse.
+We require that you validate your registration to ensure that the email address you entered was correct.<br>
+This protects against unwanted spam and malicious abuse.
 </p>
 
 <p>
-You registered with username '${user.username}' on ${user.registerTimeAsString}.
+You registered with username '${user.username}' on '${user.registerTimeAsString}'.<br>
 To activate your account, simply click on the following link:
 <a href="${webapp}/account.htm?method=activate&uid=${user.oid}&aid=${aid}">${webapp}/account.htm?method=activate&uid=${user.oid}&aid=${aid}</a>
 </p>

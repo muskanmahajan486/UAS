@@ -106,6 +106,7 @@ public class ForgotPasswordCommandResource extends ServerResource
           MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
           message.setSubject("OpenRemote Password Assistance");
           message.setTo(user.getEmail());
+          message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
           Map model = new HashMap();
           model.put("webapp", designerWebappServerRoot);
           model.put("username", user.getUsername());

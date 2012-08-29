@@ -20,6 +20,7 @@
 
 package org.openremote.useraccount.resources;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -102,6 +103,7 @@ public class InviteUserCommandResource extends ServerResource
             invitee.setEmail(inviteeEmail);
             invitee.setUsername(inviteeEmail);
             invitee.setPassword("pending password");
+            invitee.setRegisterTime(new Timestamp(System.currentTimeMillis()));
             StringTokenizer roles = new StringTokenizer(inviteeRoles, ",");
             while (roles.hasMoreElements())
             {
@@ -150,6 +152,7 @@ public class InviteUserCommandResource extends ServerResource
         MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
         message.setSubject("Invitation to Share an OpenRemote Designer Account");
         message.setTo(invitee.getEmail());
+        message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("uid", invitee.getOid());
         model.put("role", invitee.getRole());

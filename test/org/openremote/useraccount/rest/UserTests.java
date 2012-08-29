@@ -27,6 +27,7 @@ public class UserTests
   private static Long addedUserOID;
   private static Long addedUserOID2;
   private static Long addedUserOID3;
+  private static Long addedUserOID4;
   private static UserDTO addedUser;
   
   /**
@@ -72,6 +73,36 @@ public class UserTests
       Assert.fail(res.getErrorMessage());
     } else {
       addedUserOID = (Long)res.getResult();
+      Assert.assertNotNull(res.getResult());
+      Assert.assertTrue(res.getResult() instanceof Long);
+    }
+  }
+  
+  /**
+   * Test: Create user without password (this is the case when a user is created via Google checkout
+   */
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testCreateUserViaCheckout() throws Exception
+  {
+    String username = "REST_TEST_CHECKOUT";
+    UserDTO user = new UserDTO();
+    user.setUsername(username);
+    user.setEmail("marcus@openremote.org");
+    user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
+    user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
+    user.setAccount(new AccountDTO());
+
+    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
+    Representation r = cr.post(rep);
+    String str = r.getText();
+    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    if (res.getErrorMessage() != null) {
+      Assert.fail(res.getErrorMessage());
+    } else {
+      addedUserOID4 = (Long)res.getResult();
       Assert.assertNotNull(res.getResult());
       Assert.assertTrue(res.getResult() instanceof Long);
     }
@@ -276,6 +307,13 @@ public class UserTests
       Assert.assertEquals(null, res.getErrorMessage());
       
       cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID3);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      result = cr.delete();
+      str = result.getText();
+      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertEquals(null, res.getErrorMessage());
+      
+      cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID4);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
       result = cr.delete();
       str = result.getText();

@@ -61,6 +61,8 @@ import flexjson.JSONSerializer;
 public class UserCommandsResource extends ServerResource
 {
   public static final String REGISTRATION_ACTIVATION_EMAIL_VM_NAME= "registration-activation-email.vm";
+  public static final String CHECKOUT_REGISTRATION_ACTIVATION_EMAIL_VM_NAME= "checkout_registration-activation-email.vm";
+  
   
   private GenericDAO dao;
   private TransactionTemplate transactionTemplate;
@@ -129,8 +131,13 @@ public class UserCommandsResource extends ServerResource
                 dbRoles.add(role);
               }
               newUser.setRoles(dbRoles);
+              String randomPassword = null;
+              if (newUser.getPassword() == null) {
+                randomPassword = generateRandomPassword();
+                newUser.setPassword(new Md5PasswordEncoder().encodePassword(randomPassword, newUser.getUsername()));
+              }
               dao.save(newUser);
-              sendRegistrationEmail(newUser, designerWebappServerRoot);
+              sendRegistrationEmail(newUser, designerWebappServerRoot, randomPassword);
               return new GenericResourceResultWithErrorMessage(null, newUser.getOid());
             } catch (Exception e) {
               transactionStatus.setRollbackOnly();
@@ -218,25 +225,42 @@ public class UserCommandsResource extends ServerResource
   
   
   
-  private void sendRegistrationEmail(final User user, final String designerWebappServerRoot) throws Exception {
+  private void sendRegistrationEmail(final User user, final String designerWebappServerRoot, final String randomPassword) throws Exception {
     
     MimeMessagePreparator preparator = new MimeMessagePreparator() {
        public void prepare(MimeMessage mimeMessage) throws Exception {
+         String templateName = REGISTRATION_ACTIVATION_EMAIL_VM_NAME;
          MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
          message.setSubject("OpenRemote Designer Account Registration");
          message.setTo(user.getEmail());
+         message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
          Map<String, Object> model = new HashMap<String, Object>();
          model.put("user", user);
          model.put("webapp", designerWebappServerRoot);
+         if (randomPassword != null) {
+           message.setSubject("OpenRemote Pro Account Activation");
+           model.put("password", randomPassword);
+           templateName = CHECKOUT_REGISTRATION_ACTIVATION_EMAIL_VM_NAME;
+         }
          // TODO : this needs to be fixed (MR: comment was taken from original line in designer)
          model.put("aid", new Md5PasswordEncoder().encodePassword(user.getUsername(), user.getPassword()));
-         String text = VelocityEngineUtils.mergeTemplateIntoString(velocityEngine, REGISTRATION_ACTIVATION_EMAIL_VM_NAME, "UTF-8", model );
+         String text = VelocityEngineUtils.mergeTemplateIntoString(velocityEngine, templateName, "UTF-8", model );
          message.setText(text, true);
        }
     };
     this.mailSender.send(preparator);
  }
   
+  
+  private String generateRandomPassword() {
+    int passwordLength = 8;  
+    StringBuffer sb = new StringBuffer();  
+    for (int x = 0; x < passwordLength; x++)  
+    {  
+      sb.append((char)((int)(Math.random()*26)+97));  
+    }  
+    return sb.toString();
+  }
   
   public void setDao(GenericDAO dao)
   {

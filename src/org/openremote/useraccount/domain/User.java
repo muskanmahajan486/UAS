@@ -238,6 +238,11 @@ public class User extends BusinessEntity
   {
     this.registerTime = registerTime;
   }
+  
+  @Transient
+  public String getRegisterTimeAsString() {
+     return registerTime.toString().replaceAll("\\.\\d+", "");
+  }
 
   @Override
   public int hashCode()
