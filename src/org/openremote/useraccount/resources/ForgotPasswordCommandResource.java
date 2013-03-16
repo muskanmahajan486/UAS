@@ -63,7 +63,7 @@ public class ForgotPasswordCommandResource extends ServerResource
   private TransactionTemplate transactionTemplate;
   
   /**
-   * Generate a password token and send Email to user on howto rest his password <p>
+   * Generate a password token and send Email to user on how to reset his password <p>
    * <p>
    * REST Url: /rest/user/{userName}/forgotPassword -> return user<br>
    * 
