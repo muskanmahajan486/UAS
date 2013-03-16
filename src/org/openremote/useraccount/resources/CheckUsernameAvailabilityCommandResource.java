@@ -45,7 +45,7 @@ public class CheckUsernameAvailabilityCommandResource extends ServerResource
    * <p>
    * REST Url: /rest/user/checkAvailabilty/{userName} -> return true or false<br>
    * 
-   * @return one User
+   * @return true or false
    */
   @Get("json")
   public Representation forgotPassword()
