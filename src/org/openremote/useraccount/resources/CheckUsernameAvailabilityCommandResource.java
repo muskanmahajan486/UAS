@@ -48,7 +48,7 @@ public class CheckUsernameAvailabilityCommandResource extends ServerResource
    * @return true or false
    */
   @Get("json")
-  public Representation forgotPassword()
+  public Representation checkUserAvailability()
   {
     String result = null;
     try
