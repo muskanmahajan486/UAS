@@ -43,7 +43,7 @@ public class CheckUsernameAvailabilityCommandResource extends ServerResource
   /**
    * Check whether the given username is available or not. The username is not case sensitive<p>
    * <p>
-   * REST Url: /rest/user/{userName}/checkAvailabilty -> return true or false<br>
+   * REST Url: /rest/user/checkAvailabilty/{userName} -> return true or false<br>
    * 
    * @return one User
    */
