@@ -41,7 +41,7 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
@@ -66,9 +66,10 @@ public class UserCommandsResource extends ServerResource
   
   private GenericDAO dao;
   private TransactionTemplate transactionTemplate;
-  private JavaMailSenderImpl mailSender;
+  private JavaMailSender mailSender;
   private VelocityEngine velocityEngine;
   private String designerWebappServerRoot;
+  private String emailFromAddress;
 
   /**
    * Return one user based on his oid<p>
@@ -105,6 +106,7 @@ public class UserCommandsResource extends ServerResource
   @Post("json:json")
   public Representation createUser(final Representation data)
   {
+    System.out.println("Create user");
     Representation rep = null;
     GenericResourceResultWithErrorMessage result = null;
     if (data != null) {
@@ -115,6 +117,9 @@ public class UserCommandsResource extends ServerResource
           {
             try {
               String jsonData = data.getText();
+              
+              System.out.println("Should save a new user");
+              
               User newUser = new JSONDeserializer<User>().use(null, User.class).deserialize(jsonData);
               if( (newUser.getAccount() == null) || (newUser.getAccount().getOid() == 0)) {
                 newUser.setAccount(new Account());
@@ -137,10 +142,14 @@ public class UserCommandsResource extends ServerResource
                 newUser.setPassword(new Md5PasswordEncoder().encodePassword(randomPassword, newUser.getUsername()));
               }
               dao.save(newUser);
+              
+              System.out.println("Saved user");
+              
               sendRegistrationEmail(newUser, designerWebappServerRoot, randomPassword);
               return new GenericResourceResultWithErrorMessage(null, newUser.getOid());
             } catch (Exception e) {
               transactionStatus.setRollbackOnly();
+              e.printStackTrace();
               return new GenericResourceResultWithErrorMessage(e.getMessage(), null);
             }
           }
@@ -233,7 +242,7 @@ public class UserCommandsResource extends ServerResource
          MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
          message.setSubject("OpenRemote Designer Account Registration");
          message.setTo(user.getEmail());
-         message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
+         message.setFrom(emailFromAddress);
          Map<String, Object> model = new HashMap<String, Object>();
          model.put("user", user);
          model.put("webapp", designerWebappServerRoot);
@@ -272,7 +281,7 @@ public class UserCommandsResource extends ServerResource
     this.transactionTemplate = transactionTemplate;
   }
 
-  public void setMailSender(JavaMailSenderImpl mailSender)
+  public void setMailSender(JavaMailSender mailSender)
   {
     this.mailSender = mailSender;
   }
@@ -287,5 +296,8 @@ public class UserCommandsResource extends ServerResource
     this.designerWebappServerRoot = designerWebappServerRoot;
   }
 
+  public void setEmailFromAddress(String emailFromAddress) {
+    this.emailFromAddress = emailFromAddress;
+  }
   
 }

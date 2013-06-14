@@ -38,7 +38,7 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
@@ -62,10 +62,11 @@ public class InviteUserCommandResource extends ServerResource
   public static final String REGISTRATION_INVITATION_EMAIL_VM_NAME = "registration-invitation-email.vm";
 
   private GenericDAO dao;
-  private JavaMailSenderImpl mailSender;
+  private JavaMailSender mailSender;
   private VelocityEngine velocityEngine;
   private String designerWebappServerRoot;
   private TransactionTemplate transactionTemplate;
+  private String emailFromAddress;
 
   /**
    * Create a temporary user based on invitee email address and send invitation email
@@ -152,7 +153,7 @@ public class InviteUserCommandResource extends ServerResource
         MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
         message.setSubject("Invitation to Share an OpenRemote Designer Account");
         message.setTo(invitee.getEmail());
-        message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
+        message.setFrom(emailFromAddress);
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("uid", invitee.getOid());
         model.put("role", invitee.getRole());
@@ -172,7 +173,7 @@ public class InviteUserCommandResource extends ServerResource
     this.dao = dao;
   }
 
-  public void setMailSender(JavaMailSenderImpl mailSender)
+  public void setMailSender(JavaMailSender mailSender)
   {
     this.mailSender = mailSender;
   }
@@ -190,6 +191,10 @@ public class InviteUserCommandResource extends ServerResource
   public void setTransactionTemplate(TransactionTemplate transactionTemplate)
   {
     this.transactionTemplate = transactionTemplate;
+  }
+
+  public void setEmailFromAddress(String emailFromAddress) {
+    this.emailFromAddress = emailFromAddress;
   }
 
 }
