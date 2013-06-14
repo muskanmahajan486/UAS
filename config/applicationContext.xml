@@ -53,29 +53,6 @@
 			</value>
 		</property>
 	</bean>
-
-    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
-  		<property name="host" value="${mail.sender.host}" /> 
-  		<property name="port" value="${mail.sender.port}" /> 
-  		<property name="username" value="${mail.sender.username}" /> 
-  		<!--
-  		MODELER-354: having the password property defined causes issue when no password is required,
-  		             even when requesting no authentication. 
-  		<property name="password" value="${mail.sender.password}" />
-  		-->
-		<property name="javaMailProperties">
-			<props>
-	  			<prop key="mail.smtp.timeout">${mail.smtp.timeout}</prop>
-	  			<prop key="mail.from">${mail.sender.from}</prop>
-	  			<prop key="mail.smtp.ssl.enable">${mail.smtp.ssl.enable}</prop>
-          <!--
-          MODELER-354: having the authentication property defined causes issue when no authentication is required,
-                       even when requesting no authentication. 
-          <prop key="mail.smtp.auth">${mail.smtp.auth.on}</prop>
-          -->
-	  		</props>
-  		</property>
-  	</bean>
   	
 	<bean id="genericDAO" class="org.openremote.useraccount.GenericDAO">
 		<property name="sessionFactory" ref="sessionFactory"/>
