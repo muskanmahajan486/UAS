@@ -114,6 +114,18 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 		<zip destfile="${output.dir}/${project.name}.war" basedir="war"/>
 	</target>
 
+    <!-- ==================================================================== -->
+    <!-- Pack test specific war                                               -->
+    <!-- ==================================================================== -->
+    <target name="test-war" depends="javac" description="Create a war file">
+        <echo message="--------------------------------------------------------------------" />
+        <echo message=" Packing test war..." />
+        <echo message="--------------------------------------------------------------------" />
+        <echo message="" />
+        <copy file="${test.dir}/datasource-test.xml" tofile="${web-inf.dir}/classes/datasource.xml" overwrite="true"/>
+        <zip destfile="${output.dir}/${project.name}.war" basedir="war"/>
+    </target>
+
 	<!-- ==================================================================== -->
 	<!-- Deploy war into web server                                           -->
 	<!-- ==================================================================== -->
