@@ -108,6 +108,7 @@
     	<property name="dao" ref="genericDAO" />
     	<property name="velocityEngine" ref="velocityEngine"/>
     	<property name="mailSender" ref="mailSender"/>
+    	<property name="emailFromAddress" value="${mail.sender.from}"/>
     	<property name="designerWebappServerRoot" value="${designerWebapp.server.root}"/>
     	<property name="transactionTemplate" ref="transactionTemplate" />
     </bean>
@@ -116,6 +117,7 @@
     	<property name="dao" ref="genericDAO" />
     	<property name="velocityEngine" ref="velocityEngine"/>
     	<property name="mailSender" ref="mailSender"/>
+    	<property name="emailFromAddress" value="${mail.sender.from}"/>
     	<property name="designerWebappServerRoot" value="${designerWebapp.server.root}"/>
     	<property name="transactionTemplate" ref="transactionTemplate" />
     </bean>
