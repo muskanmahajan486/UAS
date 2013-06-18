@@ -106,7 +106,6 @@ public class UserCommandsResource extends ServerResource
   @Post("json:json")
   public Representation createUser(final Representation data)
   {
-    System.out.println("Create user");
     Representation rep = null;
     GenericResourceResultWithErrorMessage result = null;
     if (data != null) {
@@ -117,9 +116,6 @@ public class UserCommandsResource extends ServerResource
           {
             try {
               String jsonData = data.getText();
-              
-              System.out.println("Should save a new user");
-              
               User newUser = new JSONDeserializer<User>().use(null, User.class).deserialize(jsonData);
               if( (newUser.getAccount() == null) || (newUser.getAccount().getOid() == 0)) {
                 newUser.setAccount(new Account());
@@ -142,14 +138,10 @@ public class UserCommandsResource extends ServerResource
                 newUser.setPassword(new Md5PasswordEncoder().encodePassword(randomPassword, newUser.getUsername()));
               }
               dao.save(newUser);
-              
-              System.out.println("Saved user");
-              
               sendRegistrationEmail(newUser, designerWebappServerRoot, randomPassword);
               return new GenericResourceResultWithErrorMessage(null, newUser.getOid());
             } catch (Exception e) {
               transactionStatus.setRollbackOnly();
-              e.printStackTrace();
               return new GenericResourceResultWithErrorMessage(e.getMessage(), null);
             }
           }
