@@ -20,7 +20,7 @@ import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
-public class ControllerTests
+public class ControllerTest
 {
 
   private static ControllerDTO addedController;
