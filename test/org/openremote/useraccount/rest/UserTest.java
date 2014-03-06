@@ -37,7 +37,7 @@ public class UserTest
   @Test
   public void testQueryAllUsers() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/users");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -63,7 +63,7 @@ public class UserTest
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO());
 
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
@@ -93,7 +93,7 @@ public class UserTest
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO());
 
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
@@ -115,7 +115,7 @@ public class UserTest
   @Test
   public void testQueryUsersByEmail() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/users?email=rest_test@openremote.de");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users?email=rest_test@openremote.de");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -132,7 +132,7 @@ public class UserTest
   @Test
   public void testQueryUserByOid() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID);
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
    // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -155,7 +155,7 @@ public class UserTest
     addedUser.setValid(true);
     addedUser.addRole(new RoleDTO("ROLE_DESIGNER", Long.valueOf(1)));
     
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(addedUser));
     Representation r = cr.put(rep);
@@ -177,7 +177,7 @@ public class UserTest
   @Test
   public void testQueryUsersByEmailAndValidFlag() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/users?email=rest_test@openremote.de&valid=true");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users?email=rest_test@openremote.de&valid=true");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -196,7 +196,7 @@ public class UserTest
   public void testCheckUsernameAvailability() throws Exception
   {
     String username = "REST_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
    // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -219,7 +219,7 @@ public class UserTest
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO(addedUser.getAccount().getOid()));
 
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
@@ -242,7 +242,7 @@ public class UserTest
   public void testCheckUsernameAvailability2() throws Exception
   {
     String username = "REST_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -257,7 +257,7 @@ public class UserTest
   public void testCheckUsernameAvailabilityIgnoreCase() throws Exception
   {
     String username = "rest_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
@@ -269,7 +269,7 @@ public class UserTest
    */
   @Test
   public void testInviteUser() {
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID + "/inviteUser?inviteeEmail=mredeker@web.de&inviteeRoles=ROLE_ADMIN");
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID + "/inviteUser?inviteeEmail=mredeker@web.de&inviteeRoles=ROLE_ADMIN");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.post(null);
     String str;
@@ -292,28 +292,28 @@ public class UserTest
   @Test
   public void testDeleteUser() throws Exception
   {
-      ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID);
+      ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
       Representation result = cr.delete();
       String str = result.getText();
       GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
       Assert.assertEquals(null, res.getErrorMessage());
       
-      cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID2);
+      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID2);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
       result = cr.delete();
       str = result.getText();
       res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
       Assert.assertEquals(null, res.getErrorMessage());
       
-      cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID3);
+      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID3);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
       result = cr.delete();
       str = result.getText();
       res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
       Assert.assertEquals(null, res.getErrorMessage());
       
-      cr = new ClientResource("http://localhost:8080/uas/rest/user/" + addedUserOID4);
+      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID4);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
       result = cr.delete();
       str = result.getText();
@@ -329,7 +329,7 @@ public class UserTest
   public void testCheckUsernameAvailabilityAgain() throws Exception
   {
     String username = "rest_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8080/uas/rest/user/checkAvailabilty/" + username);
+    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
     //cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
