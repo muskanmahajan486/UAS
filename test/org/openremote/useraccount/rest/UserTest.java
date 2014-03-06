@@ -44,7 +44,7 @@ public class UserTest
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
     List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
-    Assert.assertTrue(dtos.size() > 5);
+    Assert.assertTrue("Did not get all users", dtos.size() > 5);
   }
   
   /**
@@ -133,7 +133,7 @@ public class UserTest
   public void testQueryUserByOid() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-   // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
     Representation r = cr.get();
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
