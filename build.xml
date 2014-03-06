@@ -50,6 +50,18 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	<property name="javadoc.dir" value="doc" />
 	<property name="javadoc.locale" value="en_US" />
 
+    <!--
+     | Additional classpath elements for running the test suites.
+     +-->
+    <path id = "test.path.id">
+      <path location = "${classes.dir}"/>
+      <path location = "${test.dir}"/>
+      <fileset dir = "${lib.dir}/test" includes = "**/*.jar"/>
+      <path location = "${config.dir}"/>
+
+      <path refid = "project.class.path"/>
+    </path>
+
 	<!-- ==================================================================== -->
 	<!-- project class path                                                   -->
 	<!-- ==================================================================== -->
@@ -131,7 +143,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	<!-- ==================================================================== -->
 	<!-- Compile test class into test_build/classes                           -->
 	<!-- ==================================================================== -->
-	<target name="compile-test" depends="javac" description="--> compile the test cases.">
+	<target name="compile-test" depends="war" description="--> compile the test cases.">
 		<echo message="--------------------------------------------------------------------" />
 		<echo message=" Compiling test..." />
 		<echo message="--------------------------------------------------------------------" />
@@ -177,10 +189,44 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
       +-->
     <target name = "run-test" depends = "compile-test" description = "--> run all test cases.">
 
-       <!--
-        |  Run the unit tests...
-       +-->
-      <antcall target = "-junit"/>
+        <parallel>
+
+            <!--
+             | Start web server hosting services we depend on (e.g. UAS)
+             +-->
+             <echo message = "**** STARTING TEST CONTAINER ON PORT 8090 ****"/>
+
+	         <java classname = "org.openremote.useraccount.jetty.JettyStart"
+	               classpathref = "test.path.id"
+	               fork = "true">
+	         </java>
+
+             <sequential>
+	 
+                 <!--
+                  |   Wait for the test container to be available
+                  +-->
+                 <waitfor>
+                   <socket server = "127.0.0.1" port = "8090" />
+                 </waitfor>
+                     
+                 <echo message = "**** TEST CONTAINER STARTED ****"/>
+                     
+		         <!--
+		          |  Run the unit tests...
+		         +-->
+		        <antcall target = "-junit"/>
+                     
+                 <!--
+                  |  Stop the test container
+                  +-->
+                     
+                 <echo message = "**** STOPPING TEST CONTAINER ****"/>
+				 
+		         <java classname = "org.openremote.useraccount.jetty.JettyStop" classpathref = "test.path.id" />
+                     
+             </sequential>
+        </parallel>
 
       <antcall  target = "-generate-junit-report"/>
 
