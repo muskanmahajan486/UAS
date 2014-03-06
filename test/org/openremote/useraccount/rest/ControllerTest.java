@@ -225,11 +225,16 @@ public class ControllerTest
       Assert.fail(res.getErrorMessage());
     } else {
       List<ControllerDTO> tempList = (List<ControllerDTO>)res.getResult();
+      
       Assert.assertEquals(2, tempList.size());
-      Assert.assertEquals(addedController.getOid(), tempList.get(0).getOid());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid());
-      Assert.assertEquals(addedController2.getOid(), tempList.get(1).getOid());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(1).getAccount().getOid());
+      if (addedController.getOid() != tempList.get(0).getOid() && addedController.getOid() != tempList.get(1).getOid()) {
+        Assert.fail("Invalid 1st controller id");
+      }
+      Assert.assertEquals("Invalid user id for 1st controller", addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid());
+      if (addedController2.getOid() != tempList.get(0).getOid() && addedController2.getOid() != tempList.get(1).getOid()) {
+        Assert.fail("Invalid 2nd controller id");
+      }
+      Assert.assertEquals("Invalid user id for 2nd controller", addedUser.getAccount().getOid(), tempList.get(1).getAccount().getOid());
     }
   }
   
