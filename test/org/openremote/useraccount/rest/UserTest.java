@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
 import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.RoleDTO;
@@ -17,6 +14,8 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
@@ -34,7 +33,7 @@ public class UserTest
    * Test: Retrieve all users
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser" })
   public void testQueryAllUsers() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users");
@@ -44,7 +43,7 @@ public class UserTest
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
     List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
-    Assert.assertTrue("Did not get all users", dtos.size() > 5);
+    Assert.assertTrue(dtos.size() > 5, "Did not get all users");
   }
   
   /**
@@ -112,7 +111,7 @@ public class UserTest
    * Test: Retrieve users by email address
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUsersByEmail() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users?email=rest_test@openremote.de");
@@ -129,7 +128,7 @@ public class UserTest
    * Test: Retrieve user by userOid
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUserByOid() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
@@ -149,7 +148,7 @@ public class UserTest
    * Test: Update user
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testUpdateUser() throws Exception
   {
     addedUser.setValid(true);
@@ -174,7 +173,7 @@ public class UserTest
    * Test: Retrieve users by email address and valid flag
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testUpdateUser" })
   public void testQueryUsersByEmailAndValidFlag() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users?email=rest_test@openremote.de&valid=true");
@@ -192,7 +191,7 @@ public class UserTest
    * Test: Check username availability
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout" })
   public void testCheckUsernameAvailability() throws Exception
   {
     String username = "REST_TEST2";
@@ -207,7 +206,7 @@ public class UserTest
    * Test: Add second user to existing account
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testCheckUsernameAvailability" })
   public void testAddUserToAccount() throws Exception
   {
     String username = "REST_TEST2";
@@ -238,7 +237,7 @@ public class UserTest
    * Test: Check username availability2
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailability2() throws Exception
   {
     String username = "REST_TEST2";
@@ -253,7 +252,7 @@ public class UserTest
    * Test: Check username availability ignore case
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailabilityIgnoreCase() throws Exception
   {
     String username = "rest_TEST2";
@@ -267,7 +266,7 @@ public class UserTest
   /**
    * Test invite user REST call
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testInviteUser() {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID + "/inviteUser?inviteeEmail=mredeker@web.de&inviteeRoles=ROLE_ADMIN");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
@@ -289,7 +288,7 @@ public class UserTest
   /**
    * Test: delete user
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser", "testQueryAllUsers" })
   public void testDeleteUser() throws Exception
   {
       ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
@@ -325,7 +324,7 @@ public class UserTest
    * Test: Check username availability after delete
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testDeleteUser" })
   public void testCheckUsernameAvailabilityAgain() throws Exception
   {
     String username = "rest_TEST2";

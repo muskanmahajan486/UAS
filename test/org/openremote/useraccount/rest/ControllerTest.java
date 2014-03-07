@@ -4,8 +4,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
 import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.ControllerDTO;
@@ -16,6 +14,8 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
@@ -62,7 +62,7 @@ public class ControllerTest
   /**
    * Test: Retrieve user by userOid
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUserByOid() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
@@ -99,9 +99,9 @@ public class ControllerTest
   }
 
   /**
-   * Test: Announce controller with second macAddress availble after controller was already announced
+   * Test: Announce controller with second macAddress available after controller was already announced
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController" })
   public void testCreateAnnounceController2() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses2());
@@ -121,7 +121,7 @@ public class ControllerTest
   /**
    * Test: Announce a second controller for account 
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testCreateAnnounceController3() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses3());
@@ -141,7 +141,7 @@ public class ControllerTest
   /**
    * Test: Update controller with account
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testUpdateController() throws Exception
   {
     addedController.setLinked(true);
@@ -166,7 +166,7 @@ public class ControllerTest
   /**
    * Test: Update second controller with account
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController2" })
   public void testUpdateController2() throws Exception
   {
     addedController2.setLinked(true);
@@ -191,7 +191,7 @@ public class ControllerTest
   /**
    * Test: Announce controller with second macAddress after linked to an account
    */
-  @Test
+  @Test(dependsOnMethods = { "testUpdateController2" })
   public void testCreateAnnounceControllerAfterLink() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses2());
@@ -213,7 +213,7 @@ public class ControllerTest
    * Test: Find all linked controller for the account
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testUpdateController", "testUpdateController2", "testCreateAnnounceControllerAfterLink" })
   public void testFindAllControllerFromAccount() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/find");
@@ -230,18 +230,18 @@ public class ControllerTest
       if (addedController.getOid() != tempList.get(0).getOid() && addedController.getOid() != tempList.get(1).getOid()) {
         Assert.fail("Invalid 1st controller id");
       }
-      Assert.assertEquals("Invalid user id for 1st controller", addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid());
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid(), "Invalid user id for 1st controller");
       if (addedController2.getOid() != tempList.get(0).getOid() && addedController2.getOid() != tempList.get(1).getOid()) {
         Assert.fail("Invalid 2nd controller id");
       }
-      Assert.assertEquals("Invalid user id for 2nd controller", addedUser.getAccount().getOid(), tempList.get(1).getAccount().getOid());
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(1).getAccount().getOid(), "Invalid user id for 2nd controller");
     }
   }
   
   /**
    * Test: delete controller and user
    */
-  @Test
+  @Test(dependsOnMethods = { "testFindAllControllerFromAccount" })
   public void testDeleteControllerAndUser() throws Exception
   {
       ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/" + addedController.getOid());
