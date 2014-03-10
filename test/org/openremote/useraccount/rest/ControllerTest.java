@@ -80,7 +80,8 @@ public class ControllerTest
   }
 
   /**
-   * Test: Announce controller
+   * Announce a new controller with a MAC address that is not yet known.
+   * Controller should be added to the list.
    */
   @Test
   public void testCreateAnnounceController() throws Exception
@@ -100,7 +101,8 @@ public class ControllerTest
   }
 
   /**
-   * Test: Announce controller with second macAddress available after controller was already announced
+   * Announce a controller with multiple MAC addresses, one of them being already known.
+   * Controller should not be added again, existing controller should be returned but its MAC address should be updated.
    */
   @Test(dependsOnMethods = { "testCreateAnnounceController" })
   public void testCreateAnnounceController2() throws Exception
@@ -120,7 +122,8 @@ public class ControllerTest
   }
 
   /**
-   * Test: Announce a second controller for account 
+   * Announce a new controller with a MAC address that is not yet known.
+   * Controller should be added to the list.
    */
   @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testCreateAnnounceController3() throws Exception
@@ -140,7 +143,8 @@ public class ControllerTest
   }
   
   /**
-   * Test: Update controller with account
+   * Link a known controller to an existing account.
+   * This should succeed and return the updated controller.
    */
   @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testUpdateController() throws Exception
@@ -165,7 +169,8 @@ public class ControllerTest
   }
   
   /**
-   * Test: Update second controller with account
+   * Link a known controller to an existing account.
+   * This should succeed and return the updated controller.
    */
   @Test(dependsOnMethods = { "testCreateAnnounceController2" })
   public void testUpdateController2() throws Exception
@@ -190,7 +195,9 @@ public class ControllerTest
   }
   
   /**
-   * Test: Announce controller with second macAddress after linked to an account
+   * Announce a controller with MAC address that is known.
+   * Controller is already linked to an account.
+   * Call should return controller, including information on linked account.
    */
   @Test(dependsOnMethods = { "testUpdateController2" })
   public void testCreateAnnounceControllerAfterLink() throws Exception
@@ -211,7 +218,7 @@ public class ControllerTest
   }
   
   /**
-   * Test: Find all linked controller for the account
+   * Get all controllers that are linked to a given account.
    */
   @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testUpdateController", "testUpdateController2", "testCreateAnnounceControllerAfterLink" })
@@ -240,7 +247,8 @@ public class ControllerTest
   }
   
   /**
-   * Test: delete controller and user
+   * Delete everything that has been created during these tests.
+   * Validates that all deletes are successfully performed.
    */
   @Test(dependsOnMethods = { "testFindAllControllerFromAccount" })
   public void testDeleteControllerAndUser() throws Exception
@@ -268,8 +276,6 @@ public class ControllerTest
       res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
       Assert.assertEquals(null, res.getErrorMessage());
   }
-  
-  
   
   private String getMACAddresses1()
   {
