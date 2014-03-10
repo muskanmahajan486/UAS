@@ -192,7 +192,6 @@ public class UserTest
   {
     String username = "REST_TEST2";
     ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
-   // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
     Assert.assertEquals("{\"result\": \"true\"}", str);
