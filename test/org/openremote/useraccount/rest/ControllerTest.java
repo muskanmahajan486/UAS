@@ -16,6 +16,7 @@ import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import org.testng.Assert;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
@@ -30,10 +31,10 @@ public class ControllerTest
   private static UserDTO addedUser;
   
   /**
-   * Test: Create user
+   * Sets up a specific user to run controller tests.
    */
-  @Test
-  public void testCreateUser() throws Exception
+  @BeforeSuite
+  public void setUpUser() throws Exception
   {
     String username = "CONTROLLER_TEST";
     UserDTO user = new UserDTO();
@@ -58,19 +59,12 @@ public class ControllerTest
       Assert.assertNotNull(res.getResult());
       Assert.assertTrue(res.getResult() instanceof Long);
     }
-  }
-  
-  /**
-   * Test: Retrieve user by userOid
-   */
-  @Test(dependsOnMethods = { "testCreateUser" })
-  public void testQueryUserByOid() throws Exception
-  {
-    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
+
+    cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
-    Representation r = cr.get();
-    String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
+    r = cr.get();
+    str = r.getText();
+    res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     addedUser = (UserDTO)res.getResult(); 
     if (res.getErrorMessage() != null) {
       Assert.fail(res.getErrorMessage());
