@@ -16,7 +16,7 @@ import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import org.testng.Assert;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
@@ -33,7 +33,7 @@ public class ControllerTest
   /**
    * Sets up a specific user to run controller tests.
    */
-  @BeforeSuite
+  @BeforeClass
   public void setUpUser() throws Exception
   {
     String username = "CONTROLLER_TEST";
