@@ -16,6 +16,7 @@ import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
@@ -23,6 +24,7 @@ import flexjson.JSONSerializer;
 
 public class UserTest
 {
+  private static int initialNumberOfUsers;
 
   private static Long addedUserOID;
   private static Long addedUserOID2;
@@ -30,6 +32,23 @@ public class UserTest
   private static Long addedUserOID4;
   private static UserDTO addedUser;
   
+  @BeforeClass
+  public void setUp() throws IOException
+  {
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "users");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
+    Representation r = cr.get();
+    String str = r.getText();
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
+    if (res.getErrorMessage() != null) {
+      Assert.fail(res.getErrorMessage());
+    } else {
+      @SuppressWarnings("unchecked")
+	  List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+	  initialNumberOfUsers = dtos.size();
+    }
+  }
+
   /**
    * Test: Retrieve all users
    */
@@ -40,11 +59,14 @@ public class UserTest
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    @SuppressWarnings("unchecked")
-	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
-  
-    Assert.assertTrue(dtos.size() > 5, "Did not get all users");
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str);
+    if (res.getErrorMessage() != null) {
+      Assert.fail(res.getErrorMessage());
+    } else {
+      @SuppressWarnings("unchecked")
+	  List<UserDTO> dtos = (List<UserDTO>)res.getResult();
+      Assert.assertEquals(dtos.size(), initialNumberOfUsers + 4, "4 users should have been created during the tests");
+    }
   }
   
   /**
