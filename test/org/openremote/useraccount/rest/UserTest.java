@@ -32,7 +32,6 @@ public class UserTest
   /**
    * Test: Retrieve all users
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser" })
   public void testQueryAllUsers() throws Exception
   {
@@ -41,7 +40,8 @@ public class UserTest
     Representation r = cr.get();
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+    @SuppressWarnings("unchecked")
+	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
     Assert.assertTrue(dtos.size() > 5, "Did not get all users");
   }
@@ -49,7 +49,6 @@ public class UserTest
   /**
    * Test: Create user
    */
-  @SuppressWarnings("unchecked")
   @Test
   public void testCreateUser() throws Exception
   {
@@ -80,7 +79,6 @@ public class UserTest
   /**
    * Test: Create user without password (this is the case when a user is created via Google checkout
    */
-  @SuppressWarnings("unchecked")
   @Test
   public void testCreateUserViaCheckout() throws Exception
   {
@@ -110,7 +108,6 @@ public class UserTest
   /**
    * Test: Retrieve users by email address
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUsersByEmail() throws Exception
   {
@@ -119,7 +116,8 @@ public class UserTest
     Representation r = cr.get();
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+    @SuppressWarnings("unchecked")
+	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
     Assert.assertEquals(1, dtos.size());
   }
@@ -127,7 +125,6 @@ public class UserTest
   /**
    * Test: Retrieve user by userOid
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUserByOid() throws Exception
   {
@@ -147,7 +144,6 @@ public class UserTest
   /**
    * Test: Update user
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testUpdateUser() throws Exception
   {
@@ -172,7 +168,6 @@ public class UserTest
   /**
    * Test: Retrieve users by email address and valid flag
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testUpdateUser" })
   public void testQueryUsersByEmailAndValidFlag() throws Exception
   {
@@ -181,7 +176,8 @@ public class UserTest
     Representation r = cr.get();
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+    @SuppressWarnings("unchecked")
+	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
     Assert.assertEquals(1, dtos.size());
   }
@@ -190,7 +186,6 @@ public class UserTest
   /**
    * Test: Check username availability
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout" })
   public void testCheckUsernameAvailability() throws Exception
   {
@@ -205,7 +200,6 @@ public class UserTest
   /**
    * Test: Add second user to existing account
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testCheckUsernameAvailability" })
   public void testAddUserToAccount() throws Exception
   {
@@ -236,7 +230,6 @@ public class UserTest
   /**
    * Test: Check username availability2
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailability2() throws Exception
   {
@@ -251,7 +244,6 @@ public class UserTest
   /**
    * Test: Check username availability ignore case
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailabilityIgnoreCase() throws Exception
   {
@@ -323,7 +315,6 @@ public class UserTest
   /**
    * Test: Check username availability after delete
    */
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = { "testDeleteUser" })
   public void testCheckUsernameAvailabilityAgain() throws Exception
   {
