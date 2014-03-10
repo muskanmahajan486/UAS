@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
+import org.openremote.useraccount.TestConfiguration;
 import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.ControllerDTO;
 import org.openremote.useraccount.domain.RoleDTO;
@@ -37,7 +38,7 @@ public class ControllerTest
     String username = "CONTROLLER_TEST";
     UserDTO user = new UserDTO();
     user.setUsername(username);
-    user.setPassword(new Md5PasswordEncoder().encodePassword("password", username));
+    user.setPassword(new Md5PasswordEncoder().encodePassword(TestConfiguration.ACCOUNT_MANAGER_PASSWORD, username));
     user.setEmail("controller_test@openremote.de");
     user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
     user.setValid(true);
@@ -45,7 +46,7 @@ public class ControllerTest
     user.setAccount(new AccountDTO());
 
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
     String str = r.getText();
@@ -66,7 +67,7 @@ public class ControllerTest
   public void testQueryUserByOid() throws Exception
   {
     ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
@@ -172,7 +173,7 @@ public class ControllerTest
     addedController2.setLinked(true);
     addedController2.setAccount(addedUser.getAccount());
     
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(addedController2));
     Representation r = cr.put(rep);
@@ -194,7 +195,7 @@ public class ControllerTest
   @Test(dependsOnMethods = { "testUpdateController2" })
   public void testCreateAnnounceControllerAfterLink() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses2());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses2());
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -216,7 +217,7 @@ public class ControllerTest
   @Test(dependsOnMethods = { "testUpdateController", "testUpdateController2", "testCreateAnnounceControllerAfterLink" })
   public void testFindAllControllerFromAccount() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/find");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/find");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
     Representation r = cr.get();
     String str = r.getText();
@@ -244,7 +245,7 @@ public class ControllerTest
   @Test(dependsOnMethods = { "testFindAllControllerFromAccount" })
   public void testDeleteControllerAndUser() throws Exception
   {
-      ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/" + addedController.getOid());
+      ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/" + addedController.getOid());
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
       Representation result = cr.delete();
       String str = result.getText();
@@ -252,7 +253,7 @@ public class ControllerTest
       Assert.assertEquals(null, res.getErrorMessage());
       Assert.assertEquals(null, res.getResult());
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/controller/" + addedController2.getOid());
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/" + addedController2.getOid());
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
       result = cr.delete();
       str = result.getText();
@@ -260,8 +261,8 @@ public class ControllerTest
       Assert.assertEquals(null, res.getErrorMessage());
       Assert.assertEquals(null, res.getResult());
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
       res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
