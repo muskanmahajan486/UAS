@@ -45,7 +45,7 @@ public class ControllerTest
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO());
 
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
@@ -66,7 +66,7 @@ public class ControllerTest
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUserByOid() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
@@ -85,7 +85,7 @@ public class ControllerTest
   @Test
   public void testCreateAnnounceController() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses1());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses1());
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -105,7 +105,7 @@ public class ControllerTest
   @Test(dependsOnMethods = { "testCreateAnnounceController" })
   public void testCreateAnnounceController2() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses2());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses2());
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -125,7 +125,7 @@ public class ControllerTest
   @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testCreateAnnounceController3() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses3());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses3());
     Representation r = cr.post(null);
     String str = r.getText();
     GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
@@ -148,7 +148,7 @@ public class ControllerTest
     addedController.setLinked(true);
     addedController.setAccount(addedUser.getAccount());
     
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(addedController));
     Representation r = cr.put(rep);
