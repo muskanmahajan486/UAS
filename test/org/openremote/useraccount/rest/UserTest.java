@@ -50,7 +50,8 @@ public class UserTest
   }
 
   /**
-   * Test: Retrieve all users
+   * Retrieve all users.
+   * The test counts that the appropriate number of users has been added by executing "create" tests in this class.
    */
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser" })
   public void testQueryAllUsers() throws Exception
@@ -70,7 +71,7 @@ public class UserTest
   }
   
   /**
-   * Test: Create user
+   * Create a user.
    */
   @Test
   public void testCreateUser() throws Exception
@@ -100,7 +101,7 @@ public class UserTest
   }
   
   /**
-   * Test: Create user without password (this is the case when a user is created via Google checkout
+   * Create user without password (this is the case when a user is created via Google checkout.
    */
   @Test
   public void testCreateUserViaCheckout() throws Exception
@@ -129,7 +130,7 @@ public class UserTest
   }
   
   /**
-   * Test: Retrieve users by email address
+   * Retrieve users by email address.
    */
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUsersByEmail() throws Exception
@@ -146,7 +147,7 @@ public class UserTest
   }
   
   /**
-   * Test: Retrieve user by userOid
+   * Retrieve user by userOid.
    */
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUserByOid() throws Exception
@@ -165,7 +166,7 @@ public class UserTest
   }
 
   /**
-   * Test: Update user
+   * Update user.
    */
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testUpdateUser() throws Exception
@@ -189,7 +190,7 @@ public class UserTest
   }
   
   /**
-   * Test: Retrieve users by email address and valid flag
+   * Retrieve users by email address and valid flag.
    */
   @Test(dependsOnMethods = { "testUpdateUser" })
   public void testQueryUsersByEmailAndValidFlag() throws Exception
@@ -207,7 +208,7 @@ public class UserTest
   
 
   /**
-   * Test: Check username availability
+   * Check user name should be available if no user is already using this name.
    */
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout" })
   public void testCheckUsernameAvailability() throws Exception
@@ -220,7 +221,7 @@ public class UserTest
   }
   
   /**
-   * Test: Add second user to existing account
+   * Add second user to existing account.
    */
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testCheckUsernameAvailability" })
   public void testAddUserToAccount() throws Exception
@@ -250,7 +251,7 @@ public class UserTest
   }
   
   /**
-   * Test: Check username availability2
+   * Check user name should not be available if a user with that name already exists.
    */
   @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailability2() throws Exception
@@ -264,7 +265,7 @@ public class UserTest
   }
   
   /**
-   * Test: Check username availability ignore case
+   * Validates availability check for user name is not case dependent.
    */
   @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailabilityIgnoreCase() throws Exception
@@ -278,7 +279,7 @@ public class UserTest
   }
   
   /**
-   * Test invite user REST call
+   * Invite user.
    */
   @Test(dependsOnMethods = { "testCreateUser" })
   public void testInviteUser() {
@@ -300,7 +301,7 @@ public class UserTest
   }
   
   /**
-   * Test: delete user
+   * Delete all user objects created by other tests in this class.
    */
   @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser", "testQueryAllUsers" })
   public void testDeleteUser() throws Exception
@@ -335,7 +336,7 @@ public class UserTest
   }
   
   /**
-   * Test: Check username availability after delete
+   * Check user name should be available after a user with that name has been deleted.
    */
   @Test(dependsOnMethods = { "testDeleteUser" })
   public void testCheckUsernameAvailabilityAgain() throws Exception
