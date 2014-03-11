@@ -241,7 +241,8 @@ public class User extends BusinessEntity
   
   @Transient
   public String getRegisterTimeAsString() {
-     return registerTime.toString().replaceAll("\\.\\d+", "");
+    Timestamp rTime = getRegisterTime();    
+     return (rTime != null)?registerTime.toString().replaceAll("\\.\\d+", ""):null;
   }
 
   @Override

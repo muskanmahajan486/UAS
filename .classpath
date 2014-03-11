@@ -44,12 +44,12 @@
 	<classpathentry kind="lib" path="lib/core/dom4j/dom4j-1.6.1.jar"/>
 	<classpathentry kind="lib" path="lib/core/cglib/cglib-2.1.3.jar"/>
 	<classpathentry kind="lib" path="lib/core/asm/asm.jar"/>
-	<classpathentry kind="lib" path="lib/test/junit/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="lib/core/flexjson-2.1/flexjson-2.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ORCommons"/>
 	<classpathentry kind="lib" path="lib/core/mail/activation-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/core/mail/mail-1.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/core/spring/org.springframework.context.support-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/core/velocity/velocity-1.6.2-dep.jar"/>
+	<classpathentry kind="lib" path="lib/test/testng/testng-5.9-jdk15.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
