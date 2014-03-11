@@ -41,7 +41,7 @@ public class UserTest
     String str = r.getText();
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       @SuppressWarnings("unchecked")
 	  List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
@@ -61,7 +61,7 @@ public class UserTest
     String str = r.getText();
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str);
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to query all users: " + res.getErrorMessage());
     } else {
       @SuppressWarnings("unchecked")
 	  List<UserDTO> dtos = (List<UserDTO>)res.getResult();
@@ -91,11 +91,11 @@ public class UserTest
     String str = r.getText();
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(),"Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Create user return value shoudl be a Long");
     }
   }
   
@@ -120,11 +120,11 @@ public class UserTest
     String str = r.getText();
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID4 = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(),"Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Create user return value shoudl be a Long");
     }
   }
   
@@ -142,7 +142,7 @@ public class UserTest
     @SuppressWarnings("unchecked")
 	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
-    Assert.assertEquals(1, dtos.size());
+    Assert.assertEquals(1, dtos.size(), "One user should be returned for given e-mail");
   }
   
   /**
@@ -158,9 +158,9 @@ public class UserTest
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     addedUser = (UserDTO)res.getResult(); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to query user by id: " + res.getErrorMessage());
     } else {
-      Assert.assertEquals(addedUserOID.longValue(), addedUser.getOid().longValue());
+      Assert.assertEquals(addedUserOID.longValue(), addedUser.getOid().longValue(), "Id of returned user object should be queried one");
     }
   }
 
@@ -181,10 +181,10 @@ public class UserTest
     String str = r.getText();
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to update user: " + res.getErrorMessage());
     } else {
       UserDTO savedUser = (UserDTO)res.getResult();
-      Assert.assertEquals(addedUserOID.longValue(), savedUser.getOid().longValue());
+      Assert.assertEquals(addedUserOID.longValue(), savedUser.getOid().longValue(), "Update user return value should be id of updated user");
     }
   }
   
@@ -202,7 +202,7 @@ public class UserTest
     @SuppressWarnings("unchecked")
 	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
-    Assert.assertEquals(1, dtos.size());
+    Assert.assertEquals(1, dtos.size(), "One id should be returned for given query parameters");
   }
   
 
@@ -216,7 +216,7 @@ public class UserTest
     ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"true\"}", str);
+    Assert.assertEquals("{\"result\": \"true\"}", str, "User name should be available before user has been created");
   }
   
   /**
@@ -241,11 +241,11 @@ public class UserTest
     String str = r.getText();
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID2 = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(),"Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Create user return value shoudl be a Long");
     }
   }
   
@@ -260,7 +260,7 @@ public class UserTest
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"false\"}", str);
+    Assert.assertEquals("{\"result\": \"false\"}", str, "User name should not be available for existing user");
   }
   
   /**
@@ -274,7 +274,7 @@ public class UserTest
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"false\"}", str);
+    Assert.assertEquals("{\"result\": \"false\"}", str, "User name, even with different case, should not be available for existing user");
   }
   
   /**
@@ -295,8 +295,8 @@ public class UserTest
     GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str);
     UserDTO inviteeDTO = (UserDTO)res.getResult();
     addedUserOID3 = inviteeDTO.getOid();
-    Assert.assertEquals("mredeker@web.de", inviteeDTO.getEmail());
-    Assert.assertEquals(null, res.getErrorMessage()); 
+    Assert.assertEquals("mredeker@web.de", inviteeDTO.getEmail(), "E-mail address of returned user object should be one used for invite");
+    Assert.assertNull(res.getErrorMessage(), "Invite user should not return error message"); 
   }
   
   /**
@@ -310,28 +310,28 @@ public class UserTest
       Representation result = cr.delete();
       String str = result.getText();
       GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
       
       cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID2);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
       res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
       
       cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID3);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
       res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
       
       cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID4);
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
       res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
   }
   
   /**
@@ -344,7 +344,7 @@ public class UserTest
     ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"true\"}", str);
+    Assert.assertEquals("{\"result\": \"true\"}", str, "User name should be available once user has been deleted");
   }
   
 }
