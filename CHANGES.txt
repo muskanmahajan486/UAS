@@ -1,0 +1,4 @@
+MODELER-495
+===========
+
+  - iAdd target to generate a "test specific" version of the UAS

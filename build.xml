@@ -43,12 +43,31 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	<!-- dirs for test build and output -->
 	<property name="test.build.dir" value="test_build"/>
 	<property name="test.build.classes.dir" value="${test.build.dir}/classes"/>
-	<property name="test.output" value="${test.build.dir}/test-output"/>
-	<property name="test.report" value="${test.build.dir}/test-report"/>
+	<property name="test.output.dir" value="${test.build.dir}/test-output"/>
+	<property name="test.report.dir" value="${test.build.dir}/test-report"/>
+
+	<!-- Some variables for HSQLDB Engine Server Mode, NOT In-Memory Mode -->
+	<property name="hjar" value="${lib.dir}/test/hsqldb/hsqldb.jar" />
+	<property name="hclass" value="org.hsqldb.Server" />
+	<property name="hfile" value="-database.0 hsqldb/modeler" />
+	<property name="halias" value="modeler" />
+	<property name="hport" value="9001" />
 
 	<!-- javadoc -->
 	<property name="javadoc.dir" value="doc" />
 	<property name="javadoc.locale" value="en_US" />
+
+    <!--
+     | Additional classpath elements for running the test suites.
+     +-->
+    <path id = "test.path.id">
+      <path location = "${classes.dir}"/>
+      <path location = "${test.dir}"/>
+      <fileset dir = "${lib.dir}/test" includes = "**/*.jar"/>
+      <path location = "${config.dir}"/>
+
+      <path refid = "project.class.path"/>
+    </path>
 
 	<!-- ==================================================================== -->
 	<!-- project class path                                                   -->
@@ -114,6 +133,28 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 		<zip destfile="${output.dir}/${project.name}.war" basedir="war"/>
 	</target>
 
+    <!-- ==================================================================== -->
+    <!-- Pack test specific war                                               -->
+    <!-- ==================================================================== -->
+    <!-- Mail sender mock is located in the test classes (so it does not get included in production code).
+         Test classes must thus be compiled so we can include that class in the war.
+         This is why this target depends on compile-test (which in turns will depend on javac, compiling main code). -->
+    <target name="test-war" depends="compile-test" description="Create a war file">
+        <echo message="--------------------------------------------------------------------" />
+        <echo message=" Packing test war..." />
+        <echo message="--------------------------------------------------------------------" />
+        <echo message="" />
+
+        <!-- Replace some configuration files with ones specific for testing -->
+        <copy file="${test.dir}/datasource-test.xml" tofile="${web-inf.dir}/classes/datasource.xml" overwrite="true"/>
+        <copy file="${test.dir}/applicationContext-mail-test.xml" tofile="${web-inf.dir}/classes/applicationContext-mail.xml" overwrite="true"/>
+
+        <!-- Include required mail sender mock -->
+        <copy file="${test.build.classes.dir}/org/openremote/JavaMailSenderMock.class" todir="${web-inf.dir}/classes/org/openremote"/>
+
+        <zip destfile="${output.dir}/${project.name}.war" basedir="war"/>
+    </target>
+
 	<!-- ==================================================================== -->
 	<!-- Deploy war into web server                                           -->
 	<!-- ==================================================================== -->
@@ -136,6 +177,9 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 		<echo message=" Compiling test..." />
 		<echo message="--------------------------------------------------------------------" />
 		<echo message="" />
+		
+		<mkdir dir="${test.build.classes.dir}"/>
+		
 		<copy todir="${test.build.classes.dir}">
 			<fileset dir="${test.dir}">
 				<include name="**/*.xml" />
@@ -165,6 +209,196 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	              destdir          = "./${javadoc.dir}"
 	              additionalparam  = "-breakiterator"
 	          />
+	</target>
+	
+    <!--
+      | RUN-TEST:
+      |
+      | Run all tests.
+      +-->
+    <target name = "run-test" depends = "compile-test, test-war" description = "--> run all test cases.">
+		<delete dir="hsqldb" failonerror="no"/>
+		
+        <antcall target="dbup"/>
+
+		<!-- Give a bit of time for the database to startup.
+		     TODO: Better solution would be to check DB is up. -->
+		<sleep seconds="5"/>
+
+        <sql driver="org.hsqldb.jdbcDriver"
+			classpath="${hjar}"
+			url="jdbc:hsqldb:hsql://localhost/modeler"
+			userid="sa"
+			password=""
+			src="${test.dir}/dbsetup.sql"/>
+
+        <parallel>
+
+            <!--
+             | Start web server hosting services we depend on (e.g. UAS)
+             +-->
+             <echo message = "**** STARTING TEST CONTAINER ON PORT 8090 ****"/>
+
+	         <java classname = "org.openremote.useraccount.jetty.JettyStart"
+	               classpathref = "test.path.id"
+	               fork = "true">
+	         </java>
+
+             <sequential>
+	 
+                 <!--
+                  |   Wait for the test container to be available
+                  +-->
+                 <waitfor>
+                   <socket server = "127.0.0.1" port = "8090" />
+                 </waitfor>
+                     
+                 <echo message = "**** TEST CONTAINER STARTED ****"/>
+                     
+		         <!--
+		          |  Run the unit tests...
+		         +-->
+		        <antcall target = "-junit"/>
+                     
+                 <!--
+                  |  Stop the test container
+                  +-->
+                     
+                 <echo message = "**** STOPPING TEST CONTAINER ****"/>
+				 
+		         <java classname = "org.openremote.useraccount.jetty.JettyStop" classpathref = "test.path.id" />
+                     
+             </sequential>
+        </parallel>
+
+      <antcall  target = "-generate-junit-report"/>
+	  
+      <antcall target="dbdown"/>
+
+    </target>
+	
+    <!--
+     | Deletes previously generated test reports.
+     +-->
+    <target name = "-clean-testreport">
+
+      <delete includeemptydirs = "true" dir = "${test.report.dir}" />
+      <mkdir dir = "${test.report.dir}" />
+
+    </target>
+	
+    <!--
+     | Translates the XML to HTML report - separate task because calling from within
+     | parallel execution block was causing deadlocks.
+     +-->
+    <target  name = "-generate-junit-report">
+
+      <!-- JUnit XML to HTML report -->
+
+      <junitreport todir = "${test.report.dir}">
+        <fileset dir = "${test.report.dir}">
+          <include name = "TEST-*.xml" />
+        </fileset>
+
+        <report format = "frames" todir = "${test.report.dir}" />
+      </junitreport>
+
+    </target>
+	
+    <!--
+     | Junit test task... runs JUnit for one or batch of tests, depending on junit.single.test
+     | property. Passes necessary system properties to the JVM hosting JUnit tests (forked as
+     | separate JVM process from the Ant Build JVM).
+     |
+     +-->
+    <target name = "-junit" depends = "-clean-testreport">
+
+      <echo message = "--------------------------------------------------------------------"/>
+      <echo message = " Running tests..."/>
+      <echo message = "--------------------------------------------------------------------"/>
+      <echo message = ""/>
+
+      <echo message = "RESOLVED COMPILED UNIT TEST PATH TO : ${test.build.classes.dir}"/>
+
+      <!-- Fork unit test JVM from from Ant's JVM (but run all tests in same unit test JVM) -->
+      <junit dir = "${test.build.classes.dir}"
+             printsummary = "true"
+             fork = "yes"
+             forkmode = "once"
+             haltonerror = "no"
+             filtertrace = "on"
+             maxmemory = "500m"
+             includeantruntime = "true"
+             showoutput = "false"
+             logfailedtests = "true">
+
+        <sysproperty key = "ant.home" value = "${ant.home}" />
+
+        <!-- classpath that includes compiled tests -->
+        <classpath refid = "project.class.path"/>
+
+
+        <!--
+         | Let the unit test JVM know the 'resource.path' configuration property value of the
+         | test container's deployed controller.war
+         +-->
+        <sysproperty key = "testcontainer.vm.resource.path" value = "${testcontainer.vm.resource.path}"/>
+
+
+        <!-- Pass a system property that gives tests that need access to the compiled
+             test class directory (which contains fixture files) as an absolute file path   -->
+        <sysproperty key = "classes.dir" file = "${test.build.classes.dir}"/>
+
+
+        <!-- XML output for junit (html) report generator                                 -->
+        <formatter type = "xml" />
+
+
+        <!-- If no junit.single.test has been specified, run all tests via AllTests class -->
+        <batchtest todir = "${test.report.dir}" unless = "junit.single.test">
+          <fileset dir = "${test.build.classes.dir}" includes = "**/*Test.class" />
+        </batchtest>
+
+
+        <!-- IF junit.single.test is present, just run one specified test -->
+        <test name = "${test}" todir = "${test.report.dir}" if = "junit.single.test">
+          <formatter type = "xml"/>
+        </test>
+
+      </junit>
+
+      <fail if="tests.failed" />
+
+    </target>
+	
+	<!-- ==================================================================== -->
+	<!-- HSQLDB script                                                        -->
+	<!-- ==================================================================== -->
+
+	<!-- Start up HSQLDB instance in Engine Server Mode -->
+	<target name="dbup" description="Start the Hsqldb database server">
+		<java fork="true" spawn="true" classname="${hclass}" classpath="${hjar}" 
+		        args="${hfile} -dbname.0 ${halias} -port ${hport}" />
+	</target>
+
+	<!-- Start up HSQLDB swing manager UI -->
+	<target name="dbm" description="Start up HSQLDB swing manager UI">
+		<java fork="true" classname="org.hsqldb.util.DatabaseManagerSwing" 
+	        classpath="${hjar}"  />
+	</target>
+
+	<!-- Shut down HSQLDB -->
+	<target name="dbdown" description="Shut down HSQLDB">
+		<sql classpath="${hjar}"
+	           driver="org.hsqldb.jdbcDriver" 
+	           url="jdbc:hsqldb:hsql://localhost:${hport}/${halias}" 
+	           userid="sa" password="" 
+	           print="yes"
+                   onerror="continue">
+                   <!-- shutdown command kills our connection, so an error is always reported,
+                        ignore error to ensure build does not fail -->
+	        SHUTDOWN
+	    </sql>
 	</target>
 
 </project>
