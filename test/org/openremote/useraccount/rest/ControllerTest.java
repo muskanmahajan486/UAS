@@ -1,5 +1,6 @@
 package org.openremote.useraccount.rest;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -271,6 +272,42 @@ public class ControllerTest
       Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
   }
   
+  /**
+   * Announces 2 controllers with different MAC addresses but each including
+   * the Microsoft Windows Vista/7 6to4 Adaptor fake MAC address.
+   * Test validates that this address is not taken into account and that 2 distinct controllers
+   * are correctly registered in the system.
+   * @see MODELER-531 in JIRA
+   */
+  @Test
+  public void testMicrosoft6To4MacIsNotTakenIntoAccount() throws IOException
+  {
+	  Long controller1Id = 0l;
+
+	    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses1WithMS6To4());
+	    Representation r = cr.post(null);
+	    String str = r.getText();
+	    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+	    if (res.getErrorMessage() != null) {
+	      Assert.fail("Impossible to announce a controller: " + res.getErrorMessage());
+	    } else {
+	      ControllerDTO controller = (ControllerDTO)res.getResult();
+	      Assert.assertNotNull(controller, "Announce controller should return a controller object");
+	      controller1Id = controller.getOid();
+	    }
+	    cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses2WithMS6To4());
+	    r = cr.post(null);
+	    str = r.getText();
+	    res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+	    if (res.getErrorMessage() != null) {
+	      Assert.fail("Impossible to announce a controller: " + res.getErrorMessage());
+	    } else {
+	      ControllerDTO controller = (ControllerDTO)res.getResult();
+	      Assert.assertNotNull(controller, "Announce controller should return a controller object");
+	      Assert.assertFalse((controller.getOid() == controller1Id), "A second distinct controller should have been created");
+	    }
+  }
+  
   private String getMACAddresses1()
   {
     return "11-22-33-44-55-66";
@@ -285,4 +322,15 @@ public class ControllerTest
   {
     return "12-34-56-78-90-aa";
   }
+  
+  private String getMACAddresses1WithMS6To4()
+  {
+	  return "a0-12-34-56-78-90,00-00-00-00-00-00-00-E0"; 
+  }
+
+  private String getMACAddresses2WithMS6To4()
+  {
+	  return "a1-12-34-56-78-90,00-00-00-00-00-00-00-E0"; 
+  }
+
 }
