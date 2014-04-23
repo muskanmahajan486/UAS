@@ -46,6 +46,13 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	<property name="test.output.dir" value="${test.build.dir}/test-output"/>
 	<property name="test.report.dir" value="${test.build.dir}/test-report"/>
 
+	<!-- Some variables for HSQLDB Engine Server Mode, NOT In-Memory Mode -->
+	<property name="hjar" value="${lib.dir}/test/hsqldb/hsqldb.jar" />
+	<property name="hclass" value="org.hsqldb.Server" />
+	<property name="hfile" value="-database.0 hsqldb/modeler" />
+	<property name="halias" value="modeler" />
+	<property name="hport" value="9001" />
+
 	<!-- javadoc -->
 	<property name="javadoc.dir" value="doc" />
 	<property name="javadoc.locale" value="en_US" />
@@ -165,7 +172,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	<!-- ==================================================================== -->
 	<!-- Compile test class into test_build/classes                           -->
 	<!-- ==================================================================== -->
-	<target name="compile-test" depends="war" description="--> compile the test cases.">
+	<target name="compile-test" depends="javac" description="--> compile the test cases.">
 		<echo message="--------------------------------------------------------------------" />
 		<echo message=" Compiling test..." />
 		<echo message="--------------------------------------------------------------------" />
@@ -209,7 +216,21 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
       |
       | Run all tests.
       +-->
-    <target name = "run-test" depends = "compile-test" description = "--> run all test cases.">
+    <target name = "run-test" depends = "compile-test, test-war" description = "--> run all test cases.">
+		<delete dir="hsqldb" failonerror="no"/>
+		
+        <antcall target="dbup"/>
+
+		<!-- Give a bit of time for the database to startup.
+		     TODO: Better solution would be to check DB is up. -->
+		<sleep seconds="5"/>
+
+        <sql driver="org.hsqldb.jdbcDriver"
+			classpath="${hjar}"
+			url="jdbc:hsqldb:hsql://localhost/modeler"
+			userid="sa"
+			password=""
+			src="${test.dir}/dbsetup.sql"/>
 
         <parallel>
 
@@ -251,6 +272,8 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         </parallel>
 
       <antcall  target = "-generate-junit-report"/>
+	  
+      <antcall target="dbdown"/>
 
     </target>
 	
@@ -348,5 +371,34 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
     </target>
 	
+	<!-- ==================================================================== -->
+	<!-- HSQLDB script                                                        -->
+	<!-- ==================================================================== -->
+
+	<!-- Start up HSQLDB instance in Engine Server Mode -->
+	<target name="dbup" description="Start the Hsqldb database server">
+		<java fork="true" spawn="true" classname="${hclass}" classpath="${hjar}" 
+		        args="${hfile} -dbname.0 ${halias} -port ${hport}" />
+	</target>
+
+	<!-- Start up HSQLDB swing manager UI -->
+	<target name="dbm" description="Start up HSQLDB swing manager UI">
+		<java fork="true" classname="org.hsqldb.util.DatabaseManagerSwing" 
+	        classpath="${hjar}"  />
+	</target>
+
+	<!-- Shut down HSQLDB -->
+	<target name="dbdown" description="Shut down HSQLDB">
+		<sql classpath="${hjar}"
+	           driver="org.hsqldb.jdbcDriver" 
+	           url="jdbc:hsqldb:hsql://localhost:${hport}/${halias}" 
+	           userid="sa" password="" 
+	           print="yes"
+                   onerror="continue">
+                   <!-- shutdown command kills our connection, so an error is always reported,
+                        ignore error to ensure build does not fail -->
+	        SHUTDOWN
+	    </sql>
+	</target>
 
 </project>

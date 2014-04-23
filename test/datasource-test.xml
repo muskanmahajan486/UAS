@@ -16,8 +16,9 @@
         <property name="password" value=""/>
     </bean>
 
-    <bean id="hibernateProperties" class="org.openremote.modeler.utils.HibernateProperties">
-        <property name="originalProperties">
+    <bean id="baseSessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean" abstract="true">
+        <property name="hibernateProperties">
             <props>
                 <prop key="hibernate.dialect">org.hibernate.dialect.HSQLDialect</prop>
                 <prop key="hibernate.hbm2ddl.auto">update</prop>
@@ -25,13 +26,6 @@
                 <prop key="hibernate.show_sql">false</prop>
                 <prop key="hibernate.format_sql">true</prop>
             </props>
-        </property>
-    </bean>
-    
-    <bean id="baseSessionFactory"
-          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean" abstract="true">
-        <property name="hibernateProperties">
-            <ref bean="hibernateProperties"/>
         </property>
     </bean>
 

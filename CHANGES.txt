@@ -1,3 +1,8 @@
+MODELER-499
+===========
+
+  - Add ant target to run unit tests on UAS
+
 MODELER-495
 ===========
 
