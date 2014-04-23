@@ -21,7 +21,7 @@ import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
-public class UserTests
+public class UserTest
 {
 
   private static Long addedUserOID;
