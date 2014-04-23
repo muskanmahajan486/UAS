@@ -1,3 +1,8 @@
+MODELER-531
+===========
+
+  - Black list IP6to4 MAC address in controller announce
+
 MODELER-495
 ===========
 
