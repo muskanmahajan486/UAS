@@ -7,3 +7,4 @@ Fixes:
 New features:
  - Add ant target to run unit tests on UAS (MODELER-499)
  - Add target to generate a "test specific" version of the UAS (MODELER-495)
+ - Black list IP6to4 MAC address in controller announce (MODELER-531)

@@ -1,7 +1,10 @@
 package org.openremote.useraccount.resources;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.hibernate.Hibernate;
@@ -31,6 +34,11 @@ import flexjson.JSONSerializer;
 
 public class ControllerCommandsResource extends ServerResource
 {
+
+  /**
+   * MAC addresses that should not be taken into account in comparison of announced MAC addresses when matching with existing controller. 
+   */
+  static private final Set<String> blackListedMacAddresses = new HashSet<String>(Arrays.asList("00-00-00-00-00-00-00-E0"));
 
   private GenericDAO dao;
   private TransactionTemplate transactionTemplate;
@@ -65,6 +73,9 @@ public class ControllerCommandsResource extends ServerResource
           while (st.hasMoreElements())
           {
             String macAddress = (String) st.nextElement();
+      	    if (blackListedMacAddresses.contains(macAddress.trim().toUpperCase())) {
+    		  continue;
+    	    }
             DetachedCriteria search = DetachedCriteria.forClass(Controller.class);
             search.add(Restrictions.ilike("macAddress", macAddress, MatchMode.ANYWHERE));
             controller = dao.findOneByDetachedCriteria(search);
