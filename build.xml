@@ -114,6 +114,28 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 		<zip destfile="${output.dir}/${project.name}.war" basedir="war"/>
 	</target>
 
+    <!-- ==================================================================== -->
+    <!-- Pack test specific war                                               -->
+    <!-- ==================================================================== -->
+    <!-- Mail sender mock is located in the test classes (so it does not get included in production code).
+         Test classes must thus be compiled so we can include that class in the war.
+         This is why this target depends on compile-test (which in turns will depend on javac, compiling main code). -->
+    <target name="test-war" depends="compile-test" description="Create a war file">
+        <echo message="--------------------------------------------------------------------" />
+        <echo message=" Packing test war..." />
+        <echo message="--------------------------------------------------------------------" />
+        <echo message="" />
+
+        <!-- Replace some configuration files with ones specific for testing -->
+        <copy file="${test.dir}/datasource-test.xml" tofile="${web-inf.dir}/classes/datasource.xml" overwrite="true"/>
+        <copy file="${test.dir}/applicationContext-mail-test.xml" tofile="${web-inf.dir}/classes/applicationContext-mail.xml" overwrite="true"/>
+
+        <!-- Include required mail sender mock -->
+        <copy file="${test.build.classes.dir}/org/openremote/JavaMailSenderMock.class" todir="${web-inf.dir}/classes/org/openremote"/>
+
+        <zip destfile="${output.dir}/${project.name}.war" basedir="war"/>
+    </target>
+
 	<!-- ==================================================================== -->
 	<!-- Deploy war into web server                                           -->
 	<!-- ==================================================================== -->
