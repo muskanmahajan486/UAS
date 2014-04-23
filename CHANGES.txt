@@ -1,3 +1,8 @@
+MODELER-532
+===========
+
+  - Fix unit tests
+
 MODELER-495
 ===========
 
