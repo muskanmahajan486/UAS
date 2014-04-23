@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
+import org.openremote.useraccount.TestConfiguration;
 import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.RoleDTO;
 import org.openremote.useraccount.domain.UserDTO;
@@ -17,12 +15,16 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
 public class UserTest
 {
+  private static int initialNumberOfUsers;
 
   private static Long addedUserOID;
   private static Long addedUserOID2;
@@ -30,58 +32,77 @@ public class UserTest
   private static Long addedUserOID4;
   private static UserDTO addedUser;
   
-  /**
-   * Test: Retrieve all users
-   */
-  @SuppressWarnings("unchecked")
-  @Test
-  public void testQueryAllUsers() throws Exception
+  @BeforeClass
+  public void setUp() throws IOException
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "users");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
-  
-    Assert.assertTrue(dtos.size() > 5);
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
+    if (res.getErrorMessage() != null) {
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
+    } else {
+      @SuppressWarnings("unchecked")
+	  List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+	  initialNumberOfUsers = dtos.size();
+    }
+  }
+
+  /**
+   * Retrieve all users.
+   * The test counts that the appropriate number of users has been added by executing "create" tests in this class.
+   */
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser" })
+  public void testQueryAllUsers() throws Exception
+  {
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "users");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
+    Representation r = cr.get();
+    String str = r.getText();
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str);
+    if (res.getErrorMessage() != null) {
+      Assert.fail("Impossible to query all users: " + res.getErrorMessage());
+    } else {
+      @SuppressWarnings("unchecked")
+	  List<UserDTO> dtos = (List<UserDTO>)res.getResult();
+      Assert.assertEquals(dtos.size(), initialNumberOfUsers + 4, "4 users should have been created during the tests");
+    }
   }
   
   /**
-   * Test: Create user
+   * Create a user.
    */
-  @SuppressWarnings("unchecked")
   @Test
   public void testCreateUser() throws Exception
   {
     String username = "REST_TEST";
     UserDTO user = new UserDTO();
     user.setUsername(username);
-    user.setPassword(new Md5PasswordEncoder().encodePassword("password", username));
+    user.setPassword(new Md5PasswordEncoder().encodePassword(TestConfiguration.ACCOUNT_MANAGER_PASSWORD, username));
     user.setEmail("rest_test@openremote.de");
     user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO());
 
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(),"Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Create user return value shoudl be a Long");
     }
   }
   
   /**
-   * Test: Create user without password (this is the case when a user is created via Google checkout
+   * Create user without password (this is the case when a user is created via Google checkout.
    */
-  @SuppressWarnings("unchecked")
   @Test
   public void testCreateUserViaCheckout() throws Exception
   {
@@ -93,184 +114,177 @@ public class UserTest
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO());
 
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID4 = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(),"Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Create user return value shoudl be a Long");
     }
   }
   
   /**
-   * Test: Retrieve users by email address
+   * Retrieve users by email address.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUsersByEmail() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users?email=rest_test@openremote.de");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "users?email=rest_test@openremote.de");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
+    @SuppressWarnings("unchecked")
+	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
-    Assert.assertEquals(1, dtos.size());
+    Assert.assertEquals(1, dtos.size(), "One user should be returned for given e-mail");
   }
   
   /**
-   * Test: Retrieve user by userOid
+   * Retrieve user by userOid.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testQueryUserByOid() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-   // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     addedUser = (UserDTO)res.getResult(); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to query user by id: " + res.getErrorMessage());
     } else {
-      Assert.assertEquals(addedUserOID.longValue(), addedUser.getOid().longValue());
+      Assert.assertEquals(addedUserOID.longValue(), addedUser.getOid().longValue(), "Id of returned user object should be queried one");
     }
   }
 
   /**
-   * Test: Update user
+   * Update user.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testUpdateUser() throws Exception
   {
     addedUser.setValid(true);
     addedUser.addRole(new RoleDTO("ROLE_DESIGNER", Long.valueOf(1)));
     
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(addedUser));
     Representation r = cr.put(rep);
 
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to update user: " + res.getErrorMessage());
     } else {
       UserDTO savedUser = (UserDTO)res.getResult();
-      Assert.assertEquals(addedUserOID.longValue(), savedUser.getOid().longValue());
+      Assert.assertEquals(addedUserOID.longValue(), savedUser.getOid().longValue(), "Update user return value should be id of updated user");
     }
   }
   
   /**
-   * Test: Retrieve users by email address and valid flag
+   * Retrieve users by email address and valid flag.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testUpdateUser" })
   public void testQueryUsersByEmailAndValidFlag() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/users?email=rest_test@openremote.de&valid=true");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "users?email=rest_test@openremote.de&valid=true");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
-    List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", UserDTO.class).deserialize(str); 
+    @SuppressWarnings("unchecked")
+	List<UserDTO> dtos = (List<UserDTO>)res.getResult(); 
   
-    Assert.assertEquals(1, dtos.size());
+    Assert.assertEquals(1, dtos.size(), "One id should be returned for given query parameters");
   }
   
 
   /**
-   * Test: Check username availability
+   * Check user name should be available if no user is already using this name.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout" })
   public void testCheckUsernameAvailability() throws Exception
   {
     String username = "REST_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
-   // cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"true\"}", str);
+    Assert.assertEquals("{\"result\": \"true\"}", str, "User name should be available before user has been created");
   }
   
   /**
-   * Test: Add second user to existing account
+   * Add second user to existing account.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testCheckUsernameAvailability" })
   public void testAddUserToAccount() throws Exception
   {
     String username = "REST_TEST2";
     UserDTO user = new UserDTO();
     user.setUsername(username);
-    user.setPassword(new Md5PasswordEncoder().encodePassword("password", username));
+    user.setPassword(new Md5PasswordEncoder().encodePassword(TestConfiguration.ACCOUNT_MANAGER_PASSWORD, username));
     user.setEmail("rest_test@openremote.de");
     user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO(addedUser.getAccount().getOid()));
 
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID2 = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(),"Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Create user return value shoudl be a Long");
     }
   }
   
   /**
-   * Test: Check username availability2
+   * Check user name should not be available if a user with that name already exists.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailability2() throws Exception
   {
     String username = "REST_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"false\"}", str);
+    Assert.assertEquals("{\"result\": \"false\"}", str, "User name should not be available for existing user");
   }
   
   /**
-   * Test: Check username availability ignore case
+   * Validates availability check for user name is not case dependent.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testAddUserToAccount" })
   public void testCheckUsernameAvailabilityIgnoreCase() throws Exception
   {
     String username = "rest_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"false\"}", str);
+    Assert.assertEquals("{\"result\": \"false\"}", str, "User name, even with different case, should not be available for existing user");
   }
   
   /**
-   * Test invite user REST call
+   * Invite user.
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser" })
   public void testInviteUser() {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID + "/inviteUser?inviteeEmail=mredeker@web.de&inviteeRoles=ROLE_ADMIN");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID + "/inviteUser?inviteeEmail=mredeker@web.de&inviteeRoles=ROLE_ADMIN");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation r = cr.post(null);
     String str;
     try { 
@@ -279,61 +293,59 @@ public class UserTest
     {
       throw new RuntimeException(e);
     }
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str);
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str);
     UserDTO inviteeDTO = (UserDTO)res.getResult();
     addedUserOID3 = inviteeDTO.getOid();
-    Assert.assertEquals("mredeker@web.de", inviteeDTO.getEmail());
-    Assert.assertEquals(null, res.getErrorMessage()); 
+    Assert.assertEquals("mredeker@web.de", inviteeDTO.getEmail(), "E-mail address of returned user object should be one used for invite");
+    Assert.assertNull(res.getErrorMessage(), "Invite user should not return error message"); 
   }
   
   /**
-   * Test: delete user
+   * Delete all user objects created by other tests in this class.
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateUser", "testCreateUserViaCheckout", "testInviteUser", "testQueryAllUsers" })
   public void testDeleteUser() throws Exception
   {
-      ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       Representation result = cr.delete();
       String str = result.getText();
-      GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID2);
-      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID2);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
-      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID3);
-      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID3);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
-      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID4);
-      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID4);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
-      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
   }
   
   /**
-   * Test: Check username availability after delete
+   * Check user name should be available after a user with that name has been deleted.
    */
-  @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testDeleteUser" })
   public void testCheckUsernameAvailabilityAgain() throws Exception
   {
     String username = "rest_TEST2";
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/checkAvailabilty/" + username);
-    //cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/checkAvailabilty/" + username);
     Representation r = cr.get();
     String str = r.getText();
-    Assert.assertEquals("{\"result\": \"true\"}", str);
+    Assert.assertEquals("{\"result\": \"true\"}", str, "User name should be available once user has been deleted");
   }
   
 }

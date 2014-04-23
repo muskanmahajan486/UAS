@@ -1,9 +1,9 @@
-MODELER-499
-===========
+UAS Pro 1.0.13
+==============
 
-  - Add ant target to run unit tests on UAS
+Fixes:
+ - Fix unit tests (MODELER-532)
 
-MODELER-495
-===========
-
-  - Add target to generate a "test specific" version of the UAS
+New features:
+ - Add ant target to run unit tests on UAS (MODELER-499)
+ - Add target to generate a "test specific" version of the UAS (MODELER-495)

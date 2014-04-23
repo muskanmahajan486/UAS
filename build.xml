@@ -211,6 +211,11 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 	          />
 	</target>
 	
+	<!-- ==================================================================== -->
+	<!-- Define TestNG Task                                                   -->
+	<!-- ==================================================================== -->
+	<taskdef name="testng" classpathref="project.class.path" classname="org.testng.TestNGAntTask" />
+	
     <!--
       | RUN-TEST:
       |
@@ -255,10 +260,12 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
                      
                  <echo message = "**** TEST CONTAINER STARTED ****"/>
                      
-		         <!--
-		          |  Run the unit tests...
-		         +-->
-		        <antcall target = "-junit"/>
+                 <!--
+                  |  Run the unit tests...
+                  +-->
+                  <testng classpathref="project.class.path" outputdir="${test.report.dir}">
+                      <xmlfileset dir="${test.dir}" includes="testng.xml"/>
+                  </testng>
                      
                  <!--
                   |  Stop the test container
@@ -270,8 +277,6 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
                      
              </sequential>
         </parallel>
-
-      <antcall  target = "-generate-junit-report"/>
 	  
       <antcall target="dbdown"/>
 

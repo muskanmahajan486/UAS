@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd" >
+<suite name="User Account Service suite">
+	<test name="User Account Service unit test">
+		<packages>
+			<package name="org.openremote.useraccount.*"></package>
+	    </packages>
+	</test>
+</suite>

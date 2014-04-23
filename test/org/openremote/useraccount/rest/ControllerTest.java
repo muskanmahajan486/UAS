@@ -4,9 +4,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
+import org.openremote.useraccount.TestConfiguration;
 import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.ControllerDTO;
 import org.openremote.useraccount.domain.RoleDTO;
@@ -16,6 +15,9 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
@@ -29,241 +31,245 @@ public class ControllerTest
   private static UserDTO addedUser;
   
   /**
-   * Test: Create user
+   * Sets up a specific user to run controller tests.
    */
-  @Test
-  public void testCreateUser() throws Exception
+  @BeforeClass
+  public void setUpUser() throws Exception
   {
     String username = "CONTROLLER_TEST";
     UserDTO user = new UserDTO();
     user.setUsername(username);
-    user.setPassword(new Md5PasswordEncoder().encodePassword("password", username));
+    user.setPassword(new Md5PasswordEncoder().encodePassword(TestConfiguration.ACCOUNT_MANAGER_PASSWORD, username));
     user.setEmail("controller_test@openremote.de");
     user.setRegisterTime(new Timestamp(System.currentTimeMillis()));
     user.setValid(true);
     user.addRole(new RoleDTO("ROLE_ADMIN", Long.valueOf(3)));
     user.setAccount(new AccountDTO());
 
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user");
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user");
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(user));
     Representation r = cr.post(rep);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", Long.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to create user: " + res.getErrorMessage());
     } else {
       addedUserOID = (Long)res.getResult();
-      Assert.assertNotNull(res.getResult());
-      Assert.assertTrue(res.getResult() instanceof Long);
+      Assert.assertNotNull(res.getResult(), "Create user should return a value");
+      Assert.assertTrue(res.getResult() instanceof Long, "Craete user return value should be a Long");
     }
-  }
-  
-  /**
-   * Test: Retrieve user by userOid
-   */
-  @Test
-  public void testQueryUserByOid() throws Exception
-  {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
-    Representation r = cr.get();
-    String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
+
+    cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
+    cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
+    r = cr.get();
+    str = r.getText();
+    res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", UserDTO.class).deserialize(str); 
     addedUser = (UserDTO)res.getResult(); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to get user details by id: " + res.getErrorMessage());
     } else {
-      Assert.assertEquals(addedUserOID.longValue(), addedUser.getOid().longValue());
+      Assert.assertEquals(addedUserOID.longValue(), addedUser.getOid().longValue(), "Id of returned user object should be the requested one");
     }
   }
 
   /**
-   * Test: Announce controller
+   * Announce a new controller with a MAC address that is not yet known.
+   * Controller should be added to the list.
    */
   @Test
   public void testCreateAnnounceController() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses1());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses1());
     Representation r = cr.post(null);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to announce a controller: " + res.getErrorMessage());
     } else {
       addedController = (ControllerDTO)res.getResult();
-      Assert.assertNotNull(addedController);
-      Assert.assertEquals(getMACAddresses1(), addedController.getMacAddress());
-      Assert.assertFalse(addedController.isLinked());
+      Assert.assertNotNull(addedController, "Announce controller should return a controller object");
+      Assert.assertEquals(getMACAddresses1(), addedController.getMacAddress(), "Returned controller object should have MAC address used for announce");
+      Assert.assertFalse(addedController.isLinked(), "Announced controller should initially not be linked to an account");
     }
   }
 
   /**
-   * Test: Announce controller with second macAddress availble after controller was already announced
+   * Announce a controller with multiple MAC addresses, one of them being already known.
+   * Controller should not be added again, existing controller should be returned but its MAC address should be updated.
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController" })
   public void testCreateAnnounceController2() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses2());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses2());
     Representation r = cr.post(null);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to announce a controller: " + res.getErrorMessage());
     } else {
       ControllerDTO tempController = (ControllerDTO)res.getResult();
-      Assert.assertNotNull(tempController);
-      Assert.assertEquals(getMACAddresses2(), tempController.getMacAddress());
-      Assert.assertEquals(addedController.getOid(), tempController.getOid());
+      Assert.assertNotNull(tempController, "Announce controller should return a controller object");
+      Assert.assertEquals(getMACAddresses2(), tempController.getMacAddress(), "Returned controller object should have MAC address used for announce");
+      Assert.assertEquals(addedController.getOid(), tempController.getOid(), "Returned controller's id should be one of already existing controller when controller is already known");
     }
   }
 
   /**
-   * Test: Announce a second controller for account 
+   * Announce a new controller with a MAC address that is not yet known.
+   * Controller should be added to the list.
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testCreateAnnounceController3() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses3());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses3());
     Representation r = cr.post(null);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to announce a controller: " + res.getErrorMessage());
     } else {
       addedController2 = (ControllerDTO)res.getResult();
-      Assert.assertNotNull(addedController2);
-      Assert.assertEquals(getMACAddresses3(), addedController2.getMacAddress());
-      Assert.assertFalse(addedController2.isLinked());
+      Assert.assertNotNull(addedController2, "Announce controller should return a controller object");
+      Assert.assertEquals(getMACAddresses3(), addedController2.getMacAddress(), "Returned controller object should have MAC address used for announce");
+      Assert.assertFalse(addedController2.isLinked(), "Announced controller should initially not be linked to an account");
     }
   }
   
   /**
-   * Test: Update controller with account
+   * Link a known controller to an existing account.
+   * This should succeed and return the updated controller.
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController", "testCreateAnnounceController2" })
   public void testUpdateController() throws Exception
   {
     addedController.setLinked(true);
     addedController.setAccount(addedUser.getAccount());
     
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(addedController));
     Representation r = cr.put(rep);
 
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to update controller: " + res.getErrorMessage());
     } else {
       ControllerDTO tempController = (ControllerDTO)res.getResult();
-      Assert.assertTrue(tempController.isLinked());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempController.getAccount().getOid());
+      Assert.assertTrue(tempController.isLinked(), "Updated controller should be linked");
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempController.getAccount().getOid(), "Returned controller account id should be the one set by update");
     }
   }
   
   /**
-   * Test: Update second controller with account
+   * Link a known controller to an existing account.
+   * This should succeed and return the updated controller.
    */
-  @Test
+  @Test(dependsOnMethods = { "testCreateAnnounceController2" })
   public void testUpdateController2() throws Exception
   {
     addedController2.setLinked(true);
     addedController2.setAccount(addedUser.getAccount());
     
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
     Representation rep = new JsonRepresentation(new JSONSerializer().exclude("*.class").deepSerialize(addedController2));
     Representation r = cr.put(rep);
 
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to update controller: " + res.getErrorMessage());
     } else {
       ControllerDTO tempController = (ControllerDTO)res.getResult();
-      Assert.assertTrue(tempController.isLinked());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempController.getAccount().getOid());
+      Assert.assertTrue(tempController.isLinked(), "Updated controller should be linked");
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempController.getAccount().getOid(), "Returned controller account id should be the one set by update");
     }
   }
   
   /**
-   * Test: Announce controller with second macAddress after linked to an account
+   * Announce a controller with MAC address that is known.
+   * Controller is already linked to an account.
+   * Call should return controller, including information on linked account.
    */
-  @Test
+  @Test(dependsOnMethods = { "testUpdateController2" })
   public void testCreateAnnounceControllerAfterLink() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/announce/"+ getMACAddresses2());
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/announce/"+ getMACAddresses2());
     Representation r = cr.post(null);
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to announce a controller: " + res.getErrorMessage());
     } else {
       ControllerDTO tempController = (ControllerDTO)res.getResult();
-      Assert.assertNotNull(tempController);
-      Assert.assertEquals(getMACAddresses2(), tempController.getMacAddress());
-      Assert.assertEquals(addedController.getOid(), tempController.getOid());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempController.getAccount().getOid());
+      Assert.assertNotNull(tempController, "Announce controller should return a controller object");
+      Assert.assertEquals(getMACAddresses2(), tempController.getMacAddress(), "Returned controller object should have MAC address used for announce");
+      Assert.assertEquals(addedController.getOid(), tempController.getOid(), "Returned controller's id should be one of already existing controller when controller is already known");
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempController.getAccount().getOid(), "Returned controller account id should be the one of account it was previously linked to");
     }
   }
   
   /**
-   * Test: Find all linked controller for the account
+   * Get all controllers that are linked to a given account.
    */
   @SuppressWarnings("unchecked")
-  @Test
+  @Test(dependsOnMethods = { "testUpdateController", "testUpdateController2", "testCreateAnnounceControllerAfterLink" })
   public void testFindAllControllerFromAccount() throws Exception
   {
-    ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/find");
+    ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/find");
     cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
     Representation r = cr.get();
     String str = r.getText();
-    GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", ControllerDTO.class).deserialize(str); 
+    GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", ArrayList.class).use("result.values", ControllerDTO.class).deserialize(str); 
     if (res.getErrorMessage() != null) {
-      Assert.fail(res.getErrorMessage());
+      Assert.fail("Impossible to get all controllers: " + res.getErrorMessage());
     } else {
       List<ControllerDTO> tempList = (List<ControllerDTO>)res.getResult();
-      Assert.assertEquals(2, tempList.size());
-      Assert.assertEquals(addedController.getOid(), tempList.get(0).getOid());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid());
-      Assert.assertEquals(addedController2.getOid(), tempList.get(1).getOid());
-      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(1).getAccount().getOid());
+      
+      Assert.assertEquals(2, tempList.size(), "There should be 2 controllers registered");
+      if (addedController.getOid() != tempList.get(0).getOid() && addedController.getOid() != tempList.get(1).getOid()) {
+        Assert.fail("Invalid 1st controller id");
+      }
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(0).getAccount().getOid(), "Invalid user id for 1st controller");
+      if (addedController2.getOid() != tempList.get(0).getOid() && addedController2.getOid() != tempList.get(1).getOid()) {
+        Assert.fail("Invalid 2nd controller id");
+      }
+      Assert.assertEquals(addedUser.getAccount().getOid(), tempList.get(1).getAccount().getOid(), "Invalid user id for 2nd controller");
     }
   }
   
   /**
-   * Test: delete controller and user
+   * Delete everything that has been created during these tests.
+   * Validates that all deletes are successfully performed.
    */
-  @Test
+  @Test(dependsOnMethods = { "testFindAllControllerFromAccount" })
   public void testDeleteControllerAndUser() throws Exception
   {
-      ClientResource cr = new ClientResource("http://localhost:8090/uas/rest/controller/" + addedController.getOid());
+      ClientResource cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/" + addedController.getOid());
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
       Representation result = cr.delete();
       String str = result.getText();
-      GenericResourceResultWithErrorMessage res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
-      Assert.assertEquals(null, res.getResult());
+      GenericResourceResultWithErrorMessage res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete controller should not return error message");
+      Assert.assertNull(res.getResult(), "Delete controller should not return any information");
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/controller/" + addedController2.getOid());
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "controller/" + addedController2.getOid());
       cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, addedUser.getUsername(), addedUser.getPassword());
       result = cr.delete();
       str = result.getText();
-      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
-      Assert.assertEquals(null, res.getResult());
+      res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete controller should not return error message");
+      Assert.assertNull(res.getResult(), "Delete controller should not return any information");
       
-      cr = new ClientResource("http://localhost:8090/uas/rest/user/" + addedUserOID);
-      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, "designer_appl", "password");
+      cr = new ClientResource(TestConfiguration.UAS_BASE_REST_URL + "user/" + addedUserOID);
+      cr.setChallengeResponse(ChallengeScheme.HTTP_BASIC, TestConfiguration.ACCOUNT_MANAGER_USER, TestConfiguration.ACCOUNT_MANAGER_PASSWORD);
       result = cr.delete();
       str = result.getText();
-      res =new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
-      Assert.assertEquals(null, res.getErrorMessage());
+      res = new JSONDeserializer<GenericResourceResultWithErrorMessage>().use(null, GenericResourceResultWithErrorMessage.class).use("result", String.class).deserialize(str); 
+      Assert.assertNull(res.getErrorMessage(), "Delete user should not return error message");
   }
-  
-  
   
   private String getMACAddresses1()
   {
