@@ -35,7 +35,7 @@ import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.transaction.TransactionStatus;
@@ -57,11 +57,12 @@ public class ForgotPasswordCommandResource extends ServerResource
   public static final String FORGOT_PASSWORD_EMAIL_VM_NAME = "forgot-password-email.vm";
 
   private GenericDAO dao;
-  private JavaMailSenderImpl mailSender;
+  private JavaMailSender mailSender;
   private VelocityEngine velocityEngine;
   private String designerWebappServerRoot;
   private TransactionTemplate transactionTemplate;
-  
+  private String emailFromAddress;
+
   /**
    * Generate a password token and send Email to user on how to reset his password <p>
    * <p>
@@ -106,7 +107,7 @@ public class ForgotPasswordCommandResource extends ServerResource
           MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
           message.setSubject("OpenRemote Password Assistance");
           message.setTo(user.getEmail());
-          message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
+          message.setFrom(emailFromAddress);
           Map model = new HashMap();
           model.put("webapp", designerWebappServerRoot);
           model.put("username", user.getUsername());
@@ -124,7 +125,7 @@ public class ForgotPasswordCommandResource extends ServerResource
     this.dao = dao;
   }
 
-  public void setMailSender(JavaMailSenderImpl mailSender)
+  public void setMailSender(JavaMailSender mailSender)
   {
     this.mailSender = mailSender;
   }
@@ -143,5 +144,9 @@ public class ForgotPasswordCommandResource extends ServerResource
   {
     this.transactionTemplate = transactionTemplate;
   }
-  
+
+  public void setEmailFromAddress(String emailFromAddress) {
+    this.emailFromAddress = emailFromAddress;
+  }
+
 }

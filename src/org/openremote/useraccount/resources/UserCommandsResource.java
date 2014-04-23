@@ -41,7 +41,7 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.security.authentication.encoding.Md5PasswordEncoder;
@@ -66,9 +66,10 @@ public class UserCommandsResource extends ServerResource
   
   private GenericDAO dao;
   private TransactionTemplate transactionTemplate;
-  private JavaMailSenderImpl mailSender;
+  private JavaMailSender mailSender;
   private VelocityEngine velocityEngine;
   private String designerWebappServerRoot;
+  private String emailFromAddress;
 
   /**
    * Return one user based on his oid<p>
@@ -233,7 +234,7 @@ public class UserCommandsResource extends ServerResource
          MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
          message.setSubject("OpenRemote Designer Account Registration");
          message.setTo(user.getEmail());
-         message.setFrom(mailSender.getJavaMailProperties().getProperty("mail.from"));
+         message.setFrom(emailFromAddress);
          Map<String, Object> model = new HashMap<String, Object>();
          model.put("user", user);
          model.put("webapp", designerWebappServerRoot);
@@ -272,7 +273,7 @@ public class UserCommandsResource extends ServerResource
     this.transactionTemplate = transactionTemplate;
   }
 
-  public void setMailSender(JavaMailSenderImpl mailSender)
+  public void setMailSender(JavaMailSender mailSender)
   {
     this.mailSender = mailSender;
   }
@@ -287,5 +288,8 @@ public class UserCommandsResource extends ServerResource
     this.designerWebappServerRoot = designerWebappServerRoot;
   }
 
+  public void setEmailFromAddress(String emailFromAddress) {
+    this.emailFromAddress = emailFromAddress;
+  }
   
 }
