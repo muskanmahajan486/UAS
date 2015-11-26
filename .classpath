@@ -51,5 +51,6 @@
 	<classpathentry kind="lib" path="lib/core/spring/org.springframework.context.support-3.1.1.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/core/velocity/velocity-1.6.2-dep.jar"/>
 	<classpathentry kind="lib" path="lib/test/testng/testng-5.9-jdk15.jar"/>
+	<classpathentry kind="lib" path="lib/test/jetty/jetty-6.1.22.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
