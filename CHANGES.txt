@@ -1,3 +1,8 @@
+UAS-1
+=====
+
+ - Ensure payload returned from announce API does not include credentials
+
 UAS Pro 1.0.13
 ==============
 

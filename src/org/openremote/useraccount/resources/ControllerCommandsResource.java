@@ -14,7 +14,9 @@ import org.hibernate.criterion.Restrictions;
 import org.openremote.rest.GenericResourceResultWithErrorMessage;
 import org.openremote.useraccount.GenericDAO;
 import org.openremote.useraccount.domain.Account;
+import org.openremote.useraccount.domain.AccountDTO;
 import org.openremote.useraccount.domain.Controller;
+import org.openremote.useraccount.domain.ControllerDTO;
 import org.openremote.useraccount.domain.User;
 import org.restlet.data.MediaType;
 import org.restlet.ext.json.JsonRepresentation;
@@ -96,10 +98,7 @@ public class ControllerCommandsResource extends ServerResource
             controller.setLinked(false);
             dao.save(controller);
           }
-          if (controller.getAccount() != null) {
-            Hibernate.initialize(controller.getAccount().getUsers());
-          }          
-          return new GenericResourceResultWithErrorMessage(null, controller);
+          return new GenericResourceResultWithErrorMessage(null, createControllerDTOFromEntity(controller));
         } catch (Exception e) {
           transactionStatus.setRollbackOnly();
           return new GenericResourceResultWithErrorMessage(e.getMessage(), null);
@@ -230,6 +229,19 @@ public class ControllerCommandsResource extends ServerResource
     return rep;
   }
   
+  private ControllerDTO createControllerDTOFromEntity(Controller controller)
+  {
+    ControllerDTO controllerDTO = new ControllerDTO();
+    controllerDTO.setOid(controller.getOid());
+    controllerDTO.setMacAddress(controller.getMacAddress());
+    controllerDTO.setLinked(controller.isLinked());
+    if (controller.getAccount() != null) {
+      AccountDTO accountDTO = new AccountDTO();
+      accountDTO.setOid(controller.getAccount().getOid());
+      controllerDTO.setAccount(accountDTO);
+    }
+    return controllerDTO;
+  }
   
   public void setDao(GenericDAO dao)
   {
