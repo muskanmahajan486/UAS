@@ -234,7 +234,7 @@ public class UserCommandsResource extends ServerResource
          MimeMessageHelper message = new MimeMessageHelper(mimeMessage, true, "UTF-8");
          message.setSubject("OpenRemote Designer Account Registration");
          message.setTo(user.getEmail());
-         message.setFrom(emailFromAddress);
+         message.setFrom(emailFromAddress, "OpenRemote");
          Map<String, Object> model = new HashMap<String, Object>();
          model.put("user", user);
          model.put("webapp", designerWebappServerRoot);
