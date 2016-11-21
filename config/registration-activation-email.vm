@@ -21,7 +21,7 @@ This protects against unwanted spam and malicious abuse.
 </p>
 
 <p>
-You registered with username '${user.username}' on '${user.registerTimeAsString}'.<br>
+You registered with username '${user.username}'.<br>
 To activate your account, simply click on the following link:
 <a href="${webapp}/account.htm?method=activate&uid=${user.oid}&aid=${aid}">${webapp}/account.htm?method=activate&uid=${user.oid}&aid=${aid}</a>
 </p>
